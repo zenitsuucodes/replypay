@@ -278,10 +278,14 @@
     };
     const steps = [
       "Creating token on pump.fun" + (buy ? ` · initial buy ${buy} SOL` : ""),
-      "Routing creator fee to ReplyPay vault",
+      "Minting vanity address …rpay",
+      "Routing all creator fees to the ReplyPay treasury",
       `Locking split: You ${100 - cfg.pool}% · Replies ${cfg.pool}%`,
       `Setting up weekly contest (Top ${cfg.winners})`,
     ];
+    // Demo-only fake mint prefix; real mints are pre-ground to end in "rpay"
+    const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    const mintHead = Array.from({ length: 4 }, () => B58[Math.floor(Math.random() * B58.length)]).join("");
     const intent = "https://x.com/intent/post?text=" + encodeURIComponent(text);
 
     const body = RP.modal.open(`
@@ -294,7 +298,7 @@
         <div class="lp-final">
           <div class="lf-coin">
             <div class="art">${coinArt(coin)}</div>
-            <div class="meta"><b>${esc(v.name)}</b><small>$${esc(v.ticker)} · by @${esc(v.handle)} · ${cfg.pool}% to replies · top ${cfg.winners}</small></div>
+            <div class="meta"><b>${esc(v.name)}</b><small>$${esc(v.ticker)} · by @${esc(v.handle)} · ${cfg.pool}% to replies · top ${cfg.winners}</small><small style="font-family:var(--mono)">${mintHead}…<b style="color:#9fd4ff">rpay</b></small></div>
           </div>
           <div class="lf-card">
             <h4>Post your first home post</h4>
