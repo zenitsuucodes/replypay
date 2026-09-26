@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ReplyPay - Get paid for replying</title>
+<meta name="description" content="Launch a memecoin on pump.fun. Every week, part of the creator fee goes to the best replies on your post, picked by holders and paid in dollars through X Money." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="hero.css" />
+<link rel="stylesheet" href="sections.css" />
+<link rel="stylesheet" href="launch.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230a0a0a'/%3E%3Cpath d='M7 8h18v12H14l-5 4v-4H7z' fill='none' stroke='white' stroke-width='2.6' stroke-linejoin='round'/%3E%3Cpath d='M16 11v6M13.5 12.5c0-.8 1-1.2 2.5-1.2s2.5.5 2.5 1.3c0 1.8-5 .9-5 2.8 0 .8 1.1 1.3 2.5 1.3s2.5-.5 2.5-1.2' fill='none' stroke='%231d9bf0' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="liquid" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="noise" />
+    <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="38" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+  <symbol id="x-logo" viewBox="0 0 24 24"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></symbol>
+  <symbol id="pill" viewBox="0 0 24 24"><g transform="rotate(-45 12 12)"><rect x="3" y="8" width="18" height="8" rx="4" fill="#fff"/><path d="M12 8h5a4 4 0 0 1 0 8h-5z" fill="#4ade80"/></g></symbol>
+  <symbol id="verified" viewBox="0 0 24 24"><path fill="#1d9bf0" d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91C2.63 9.33 1.75 10.57 1.75 12s.88 2.67 2.19 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z"/><path fill="#fff" d="m10.54 16.2-3.6-3.6 1.42-1.42 2.18 2.18 5.1-5.1 1.42 1.42z"/></symbol>
+  <symbol id="heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.2-9.3C1.6 7.8 3.8 4.5 7.2 4.5c2 0 3.5 1.1 4.8 2.8 1.3-1.7 2.8-2.8 4.8-2.8 3.4 0 5.6 3.3 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z"/></symbol>
+  <symbol id="logo" viewBox="0 0 32 32"><path d="M6 7h20v13H14.5L9 24.5V20H6z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 10.2v7.6M13.2 12.2c0-.9 1.1-1.4 2.8-1.4s2.8.6 2.8 1.5c0 2-5.6 1-5.6 3.1 0 .9 1.2 1.4 2.8 1.4s2.8-.6 2.8-1.4" fill="none" stroke="#1d9bf0" stroke-width="1.6" stroke-linecap="round"/></symbol>
+</svg>
+
+<div class="ambient" aria-hidden="true">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="orb o4"></div>
+  <div class="grain"></div>
+</div>
+
+<div class="app" id="app">
+  <aside class="sidebar glass-flat" id="sidebar">
+    <a href="#top" class="brand" aria-label="ReplyPay home">
+      <span class="brand-mark"><svg><use href="#logo"/></svg></span>
+      <span class="brand-word" data-brand>ReplyPay</span>
+    </a>
+    <nav class="side-nav">
+      <a href="#top" class="nav-item active" data-nav="top"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
+      <a href="#explore" class="nav-item" data-nav="explore"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Live contests</span></a>
+      <a href="#launch" class="nav-item" data-nav="launch"><svg viewBox="0 0 24 24"><path d="M5 19c0-2.5 1-4 3-4.5M14.5 4.5c3-.5 5 0 5 0s.5 2-.1 5L13 16l-5-5z"/><path d="M8 11 5 11l2.5-3H11M13 16v3l3-2.5V13"/></svg><span>Launch</span></a>
+      <a href="#how" class="nav-item" data-nav="how"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 9.5h16M9 3v4M15 3v4"/></svg><span>Weekly cycle</span></a>
+      <a href="#payments" class="nav-item" data-nav="payments"><svg viewBox="0 0 24 24"><path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3.2c0 4.6 9.2 2.4 9.2 7.1 0 2.1-2.1 3.3-4.7 3.3S7.3 16 7.3 14"/></svg><span>Payments</span></a>
+      <a href="#fair" class="nav-item" data-nav="fair"><svg viewBox="0 0 24 24"><path d="M12 3.5 19 6.5v5c0 4.3-3 7.6-7 9-4-1.4-7-4.7-7-9v-5z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg><span>Fair play</span></a>
+    </nav>
+    <button class="collapse-btn" id="collapseBtn" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
+  </aside>
+
+  <div class="main-col">
+    <header class="topbar">
+      <div class="progressive-blur" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <label class="search glass-pill">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+        <input id="searchInput" type="text" placeholder="Search coins or X handles" autocomplete="off" />
+        <kbd>/</kbd>
+        <div class="search-results glass" id="searchResults"></div>
+      </label>
+      <div class="top-actions">
+        <a href="#launch" class="btn btn-white">Launch</a>
+        <button class="btn btn-ghost" id="walletBtn">Connect wallet</button>
+      </div>
+    </header>
+
+    <main id="top">
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-badge glass-pill reveal"><span class="dot-live"></span> <span id="liveCount">41</span> contests live this week</div>
+        <h1 class="reveal" style="--d:.05s">Your coin's fees pay<br/><span class="shimmer">the best replies</span> on <span class="x-word"><svg><use href="#x-logo"/></svg></span></h1>
+        <p class="hero-sub reveal" style="--d:.1s">Launch a memecoin, post about it, and every week a slice of the creator fee goes to the <b>top replies and quote posts</b>. Holders vote. Winners get dollars through <svg class="xi"><use href="#x-logo"/></svg> Money. Launch on <span class="chip-inline"><svg><use href="#pill"/></svg>Pump</span></p>
+        <div class="hero-ctas reveal" style="--d:.15s">
+          <a href="#launch" class="btn btn-white btn-lg">Launch a coin</a>
+          <a href="#explore" class="btn btn-ghost btn-lg">Find a contest to reply to</a>
+        </div>
+
+        <div class="bento">
+          <a href="#explore" class="tile glass t-explore reveal" data-tilt>
+            <div class="marquee-cols" id="marqueeCols"></div>
+            <div class="tile-fade"></div>
+            <div class="tile-foot"><span>Live contests</span><span class="open">Open <b>→</b></span></div>
+          </a>
+
+          <a href="#explore" class="tile glass t-board reveal" style="--d:.06s" data-tilt>
+            <div class="board">
+              <div class="board-head"><span class="eyebrow">Reply leaderboard · $STUDIO</span><span class="timer" id="boardTimer">2d 14:08:31</span></div>
+              <div class="home-post">
+                <div class="hp-top"><span class="av" style="--a:#1d9bf0;--b:#1e3a8a">L</span><b>lil vapor</b><small>@lilvapor · home post</small><svg class="xi"><use href="#x-logo"/></svg></div>
+                <p>$STUDIO is live. Best replies this week split 40% of the fees. Tell me what the album should be called 👇</p>
+              </div>
+              <div class="board-list" id="boardList"></div>
+            </div>
+            <div class="tile-foot"><span>Leaderboard</span><span class="open">Open <b>→</b></span></div>
+          </a>
+
+          <a href="#explore" class="tile glass t-vote reveal" data-tilt>
+            <div class="vote-demo" id="voteDemo">
+              <div class="an-top"><span class="eyebrow">Holders voting</span><span class="eyebrow" style="color:#ddd2ff">Finalists</span></div>
+            </div>
+            <div class="tile-foot"><span>Vote</span><span class="open">Open <b>→</b></span></div>
+          </a>
+
+          <a href="#payments" class="tile glass t-analytics reveal" style="--d:.06s" data-tilt>
+            <div class="an-top">
+              <span class="eyebrow">Paid to repliers</span>
+              <div class="tf-wrap"><div><span>All time</span><span>30D</span><span>7D</span><span>All time</span></div></div>
+            </div>
+            <div class="odometer" id="odometer"></div>
+            <div class="bars" id="heroBars"></div>
+            <div class="tile-foot"><span>Payouts</span><span class="open">Open <b>→</b></span></div>
+          </a>
+
+          <a href="#launch" class="tile glass t-launch reveal" style="--d:.12s" data-tilt>
+            <div class="composer">
+              <span class="eyebrow">Home post</span>
+              <div class="cmp-box">
+                <div class="hp-top"><span class="av" style="--a:#f472b6;--b:#9d174d">N</span>nova</div>
+                <span class="cmp-typed" id="cmpTyped"></span><span class="cmp-caret"></span>
+              </div>
+              <div class="cmp-actions">
+                <span class="pool-chip">Reply pool · 50%</span>
+                <span class="fake-post" id="fakePost">Post</span>
+              </div>
+              <div class="cmp-sent" id="cmpSent"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg> Linked. Contest is live.</div>
+            </div>
+            <div class="tile-foot"><span>Launch</span><span class="open">Open <b>→</b></span></div>
+          </a>
+        </div>
+
+        <div class="stats">
+          <div class="stat glass reveal"><span class="eyebrow">Coins launched</span><b data-count="1874">0</b><small>+38 today</small></div>
+          <div class="stat glass reveal" style="--d:.05s"><span class="eyebrow">Repliers paid</span><b data-count="12406">0</b><small>unique X accounts</small></div>
+          <div class="stat glass reveal" style="--d:.1s"><span class="eyebrow">Paid to repliers</span><b data-count="486215" data-prefix="$">0</b><small>in dollars</small></div>
+          <div class="stat glass reveal" style="--d:.15s"><span class="eyebrow">Votes cast</span><b data-count="93318">0</b><small>by holders</small></div>
+        </div>
+      </section>
+
+      <!-- EXPLORE -->
+      <section class="section" id="explore">
+        <div class="two-col">
+          <div>
+            <div class="sec-head">
+              <h2>Live contests</h2>
+              <div class="seg-tabs" id="contestTabs">
+                <button class="active" data-sort="pool">Biggest pool</button>
+                <button data-sort="ending">Ending soon</button>
+                <button data-sort="voting">Voting now</button>
+              </div>
+              <div class="pager"><button id="pgPrev" aria-label="Previous page">‹</button><span id="pgLabel">1 / 2</span><button id="pgNext" aria-label="Next page">›</button></div>
+            </div>
+            <div class="contest-grid" id="contestGrid"></div>
+          </div>
+          <div>
+            <div class="sec-head"><h2>Top <svg class="xh"><use href="#x-logo"/></svg> repliers</h2></div>
+            <div class="earner-list" id="earnerList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LAUNCH -->
+      <section class="section" id="launch">
+        <div class="sec-head center">
+          <span class="eyebrow">Launch</span>
+          <h2 class="big">Launch here. Let the replies earn.</h2>
+          <p class="muted">We deploy your coin on pump.fun and route the creator fee to ReplyPay. You choose how much goes to you and how much goes to the reply pool.</p>
+        </div>
+
+        <div class="launch-wrap">
+          <form class="launch-form glass reveal" id="launchForm" novalidate>
+            <div class="step-label"><span>1</span> Your coin</div>
+            <div class="coin-fields">
+              <label class="img-drop" id="imgDrop">
+                <input type="file" id="imgInput" accept="image/*" hidden />
+                <img id="imgPreview" alt="" hidden />
+                <span class="img-empty"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5"/></svg>Picture</span>
+              </label>
+              <div class="coin-text">
+                <label class="field" id="fNameWrap"><span>Name</span><input id="fName" maxlength="32" placeholder="Studio Session" /></label>
+                <label class="field" id="fTickerWrap"><span>Ticker</span><div class="ticker-in"><i>$</i><input id="fTicker" maxlength="10" placeholder="STUDIO" /></div></label>
+              </div>
+            </div>
+
+            <div class="step-label"><span>2</span> You</div>
+            <label class="field" id="fHandleWrap"><span>Your X handle <em>creator share goes here</em></span><div class="handle-in"><i>@</i><input id="fHandle" maxlength="15" placeholder="lilvapor" /></div><span class="msg" id="fHandleMsg"></span></label>
+
+            <div class="step-label"><span>3</span> The reply pool <em class="step-hint">locked after launch</em></div>
+            <div class="pool-box">
+              <div class="pool-split"><div class="ps-c" id="psC">You 50%</div><div class="ps-p" id="psP">Replies 50%</div></div>
+              <input type="range" class="range" id="poolRange" min="20" max="80" step="5" value="50" aria-label="Reply pool percentage" />
+              <div class="pool-meta"><span>20% to replies</span><span>80% to replies</span></div>
+              <div class="opt-row"><span>Winners per week<small>Pool is split by vote share</small></span><div class="chips" id="winnersChips"><button type="button" data-v="3">Top 3</button><button type="button" data-v="5">Top 5</button><button type="button" class="on" data-v="10">Top 10</button></div></div>
+              <div class="opt-row"><span>Who can win<small>Anti-bot filter</small></span><div class="chips" id="eligChips"><button type="button" class="on" data-v="any">Any account 90d+</button><button type="button" data-v="verified">Verified only</button></div></div>
+            </div>
+
+            <div class="step-label"><span>4</span> Launch</div>
+            <label class="field"><span>Initial buy <em>optional, in SOL</em></span><input id="fBuy" type="number" min="0" step="0.1" placeholder="0.0" /></label>
+            <button type="submit" class="btn btn-white btn-lg btn-block" id="launchBtn"><svg class="pill-ic"><use href="#pill"/></svg> Launch on pump.fun</button>
+            <p class="form-note">After launch you'll post your first home post on X. Each Monday you post a new one.</p>
+          </form>
+
+          <div class="preview-col">
+            <div class="preview-card glass reveal">
+              <div class="pv-img" id="pvImg"></div>
+              <div class="pv-body">
+                <div class="pv-title"><b id="pvName">Studio Session</b><span id="pvTicker">$STUDIO</span></div>
+                <div class="pv-by"><span class="av" id="pvAv" style="--a:#1d9bf0;--b:#1e3a8a">L</span><span>by <b id="pvHandle">@lilvapor</b></span></div>
+                <div class="pv-post" id="pvPost"></div>
+                <div class="poolbar" style="margin-top:12px"><i class="pc" id="pvPc" style="flex:50"></i><i class="pp" id="pvPp" style="flex:50"></i></div>
+              </div>
+            </div>
+
+            <div class="sim glass reveal">
+              <div class="sim-head"><span class="eyebrow">Weekly payout estimate</span><span class="sim-val" id="simVolLabel">$250K volume</span></div>
+              <input type="range" id="simVol" min="10000" max="5000000" step="10000" value="250000" class="range" aria-label="Weekly trading volume" />
+              <div class="sim-rows" id="simRows"></div>
+              <p class="form-note">Estimate at a 0.30% creator fee on weekly pump.fun volume, before swap costs. Payouts limited to $750 per handle per 24h by X Money.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WEEKLY CYCLE -->
+      <section class="section" id="how">
+        <div class="sec-head center">
+          <span class="eyebrow">The weekly cycle</span>
+          <h2 class="big">One post, one week, one payout</h2>
+          <p class="muted">Every coin runs the same loop. A new home post every Monday keeps the contest fresh and puts the coin back in people's feeds.</p>
+        </div>
+        <div class="cycle" id="cycle">
+          <div class="cstep glass reveal"><span class="day">MON</span><h3>Creator posts</h3><p>The creator posts the week's home post from ReplyPay. It's linked to the coin automatically.</p><div class="art art-post"><div style="display:flex;flex-direction:column;gap:6px;width:70%"><span class="ln"></span><span class="ln" style="width:85%"></span><span class="ln" style="width:45%"></span></div></div></div>
+          <div class="cstep glass reveal" style="--d:.05s"><span class="day">MON → THU</span><h3>People reply</h3><p>Anyone replies or quote posts. The leaderboard ranks them live by likes from real accounts.</p><div class="art art-replies"><i></i><i></i><i></i></div></div>
+          <div class="cstep glass reveal" style="--d:.1s"><span class="day">FRI 00:00</span><h3>Finalists locked</h3><p>The top 20 replies become finalists. Holdings are snapshotted so votes can't be bought late.</p><div class="art art-final"><span>#1</span><span>#2</span><span>#3</span><span>#4</span><span>…</span></div></div>
+          <div class="cstep glass reveal" style="--d:.15s"><span class="day">FRI → SUN</span><h3>Holders vote</h3><p>Coin holders vote for their favourite replies. Vote weight grows with holdings, capped per wallet.</p><div class="art art-vote"><i style="--h:40px"></i><i style="--h:28px;animation-delay:.2s"></i><i style="--h:34px;animation-delay:.4s"></i><i style="--h:18px;animation-delay:.6s"></i><i style="--h:24px;animation-delay:.8s"></i></div></div>
+          <div class="cstep glass reveal" style="--d:.2s"><span class="day">SUN 20:00</span><h3>Winners get paid</h3><p>The pool is swapped to USD and split by vote share. Each winner gets dollars through X Money.</p><div class="art art-pay"><span class="coinflow">+$412</span><span class="coinflow">+$260</span><span class="coinflow">+$118</span></div></div>
+        </div>
+        <div class="cycle-track"><i id="cycleFill"></i></div>
+      </section>
+
+      <!-- PIPELINE -->
+      <section class="section">
+        <div class="pipe glass reveal">
+          <div class="pipe-head">
+            <div><span class="eyebrow">Where the fee goes</span><h3>From trade to X Money</h3></div>
+            <span class="live-tag"><span class="dot-live"></span> Live</span>
+          </div>
+          <div class="pipe-flow">
+            <div class="pnode"><span class="pn-ic"><svg><use href="#pill"/></svg></span><b>pump.fun trades</b><small>Creator fee per trade</small></div>
+            <div class="plink"><i></i></div>
+            <div class="pnode"><span class="pn-ic sol">◎</span><b>ReplyPay vault</b><small>Held per coin, in SOL</small></div>
+            <div class="plink"><i></i></div>
+            <div class="pnode"><span class="pn-ic usd">$</span><b>Swap to USD</b><small>Sunday, market order</small></div>
+            <div class="plink"><i></i></div>
+            <div class="pipe-split">
+              <div class="bucket"><span class="av" style="--a:#1d9bf0;--b:#1e3a8a">L</span><div><b>Creator</b><small>@lilvapor</small></div><span class="pct">60%</span></div>
+              <div class="bucket"><div class="winners"><span class="av" style="--a:#f472b6;--b:#9d174d">N</span><span class="av" style="--a:#fbbf24;--b:#92400e">K</span><span class="av" style="--a:#34d399;--b:#065f46">J</span><span class="av" style="--a:#a78bfa;--b:#5b21b6">+7</span></div><div><b>Reply pool</b><small>Top 10 by vote</small></div><span class="pct">40%</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAYMENTS -->
+      <section class="section" id="payments">
+        <div class="two-col">
+          <div>
+            <div class="sec-head"><h2>Recent payments</h2><span class="live-tag"><span class="dot-live"></span> Live</span></div>
+            <div class="pay-list" id="payList"></div>
+          </div>
+          <div>
+            <div class="sec-head"><h2>Biggest pools paid</h2></div>
+            <div class="mostpaid glass" id="mostPaid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAIR PLAY -->
+      <section class="section" id="fair">
+        <div class="sec-head center">
+          <span class="eyebrow">Fair play</span>
+          <h2 class="big">Hard to farm, easy to check</h2>
+        </div>
+        <div class="rules">
+          <div class="rule glass reveal"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3.5 19 6.5v5c0 4.3-3 7.6-7 9-4-1.4-7-4.7-7-9v-5z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg></span><h3>Real accounts only</h3><p>Only likes from accounts 90+ days old count toward finalists. Creators can require verified accounts.</p></div>
+          <div class="rule glass reveal" style="--d:.05s"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 12h6M12 9v6"/></svg></span><h3>Snapshot before voting</h3><p>Holdings are frozen Friday 00:00 UTC. Buying in during the vote doesn't add weight.</p></div>
+          <div class="rule glass reveal" style="--d:.1s"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 18h16M7 18V9M12 18V5M17 18v-6"/></svg></span><h3>Whale cap</h3><p>Vote weight scales with holdings but no wallet can hold more than 5% of the vote.</p></div>
+          <div class="rule glass reveal"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg></span><h3>One win per person</h3><p>One payout per X account per contest, no matter how many replies they post. The creator can't win their own pool.</p></div>
+          <div class="rule glass reveal" style="--d:.05s"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 4H7a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 4v4h4M9 13h6M9 16.5h4"/></svg></span><h3>Public record</h3><p>Every contest shows the home post, finalists, vote totals, winners, amounts and receipts. Anyone can check.</p></div>
+          <div class="rule glass reveal" style="--d:.1s"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg></span><h3>No wallet to get paid</h3><p>Winners don't need a Solana wallet or a pump.fun account. Dollars land in X Money.</p></div>
+        </div>
+
+        <div class="faq">
+          <details class="glass reveal"><summary>What if a week gets no replies?</summary><p>The reply pool rolls over to next week's contest, so the next pool is bigger.</p></details>
+          <details class="glass reveal"><summary>What if the creator skips posting?</summary><p>If there's no new home post by Tuesday, last week's post stays active and replies to it keep counting.</p></details>
+          <details class="glass reveal"><summary>Do I need to hold the coin to win?</summary><p>No. Anyone on X can reply and win. You only need to hold the coin to vote.</p></details>
+          <details class="glass reveal"><summary>Can I change the pool split later?</summary><p>No. It's locked at launch so repliers and holders know what they're playing for.</p></details>
+          <details class="glass reveal"><summary>What is ReplyPay not?</summary><p>It's not an exchange or a wallet, and it doesn't hold your coin supply. It launches on pump.fun, runs the weekly reply contest and pays out through X Money.</p></details>
+          <details class="glass reveal"><summary>Why are big wins spread over days?</summary><p>X Money limits each account to $750 in a rolling 24 hours, so larger wins are sent in parts. Every part shows up in the receipt.</p></details>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="brand small"><span class="brand-mark"><svg><use href="#logo"/></svg></span><span data-brand>ReplyPay</span></div>
+        <span class="muted">Launch on pump.fun · reply contests · paid in <svg class="xi"><use href="#x-logo"/></svg> Money. Not affiliated with X Corp. or pump.fun.</span>
+        <span class="muted">© 2026</span>
+      </footer>
+    </main>
+  </div>
+
+  <nav class="tabbar glass-pill">
+    <a href="#top" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/></svg></a>
+    <a href="#explore" aria-label="Contests"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></a>
+    <a href="#launch" class="tb-launch" aria-label="Launch"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></a>
+    <a href="#payments" aria-label="Payments"><svg viewBox="0 0 24 24"><path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3.2c0 4.6 9.2 2.4 9.2 7.1 0 2.1-2.1 3.3-4.7 3.3S7.3 16 7.3 14"/></svg></a>
+    <a href="#fair" aria-label="Fair play"><svg viewBox="0 0 24 24"><path d="M12 3.5 19 6.5v5c0 4.3-3 7.6-7 9-4-1.4-7-4.7-7-9v-5z"/></svg></a>
+  </nav>
+</div>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-scrim" data-close></div>
+  <div class="modal-card glass" role="dialog" aria-modal="true">
+    <button class="modal-x" data-close aria-label="Close">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast glass-pill" id="toast"></div>
+
+<script src="core.js"></script>
+<script src="hero.js"></script>
+<script src="sections.js"></script>
+<script src="launch.js"></script>
+</body>
+</html>

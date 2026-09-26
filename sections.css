@@ -1,0 +1,63 @@
+/* ReplyPay sections.js extras (rp- prefixed). Base styles live in styles.css. */
+
+/* let hover transform win after the entry animation finishes */
+.ccard { animation-fill-mode: backwards; min-width: 0; }
+.ccard:focus-visible, .pay-top:focus-visible, .mp-row:focus-visible { outline: 2px solid var(--x-blue); outline-offset: 3px; border-radius: 14px; }
+.ccard .title { min-width: 0; }
+.ccard .title b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pager button:disabled { opacity: 0.3; cursor: default; background: none; }
+.rp-empty { grid-column: 1 / -1; padding: 28px 0; text-align: center; }
+
+/* tags anywhere (styles.css only sizes them inside .pay-top) */
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.quote-tag { background: rgba(167,139,250,.2); color: #ddd2ff; font-size: 10px; padding: 1px 7px; }
+
+/* payments */
+.pay-top { min-width: 0; }
+.rp-pay-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.rp-pay-main .to { line-height: 1.5; }
+.rp-split { font-size: 12px; color: var(--amber); padding: 6px 0 0; }
+
+/* biggest pools */
+.mp-row { cursor: pointer; }
+.mp-row > div:not(.bar) { min-width: 0; }
+.mp-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-mini { width: 28px; height: 28px; border-radius: 8px; overflow: hidden; display: block; }
+.rp-mini .coin-art { font-size: 10px; }
+
+/* coin page */
+.rp-cp-meta { min-width: 0; }
+.rp-cp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.rp-cp-chips .phase { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.rp-timer { font-family: var(--mono); font-size: 11px; color: #d8d8d8; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-2); }
+.rp-cp-post { margin-bottom: 16px; }
+.rp-cp-post p { margin-bottom: 12px; }
+.rp-reply-btn { gap: 6px; }
+.cp-tabs { overflow-x: auto; scrollbar-width: none; }
+.cp-tabs .seg-tabs button { white-space: nowrap; }
+.finalist { min-width: 0; }
+.finalist .txt { min-width: 0; }
+.finalist .txt p { overflow-wrap: anywhere; }
+.rp-rank { font-family: var(--mono); font-size: 12px; color: var(--muted); align-self: start; padding-top: 4px; }
+.rp-who { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rp-who .av { width: 20px; height: 20px; font-size: 9px; box-shadow: none; }
+.vote-btn:disabled { opacity: 0.45; cursor: not-allowed; background: none; }
+
+.rp-week, .rp-receipt { padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.035); border: 1px solid var(--line); animation: entryEnter 0.4s var(--ease) both; }
+.rp-week-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; margin-bottom: 8px; }
+.rp-week-head span { color: var(--muted); }
+.rp-line { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; min-width: 0; }
+.rp-line .av { width: 22px; height: 22px; font-size: 9px; box-shadow: none; }
+.rp-line > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.rp-line > b { font-family: var(--mono); font-weight: 500; }
+.rp-receipt .kv:last-of-type { border-bottom: 0; }
+
+@media (max-width: 720px) {
+  .cp-head { gap: 12px; }
+  .cp-head .art { width: 56px; height: 56px; border-radius: 14px; }
+  .finalist { grid-template-columns: 20px 1fr; }
+  .finalist .side { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; }
+  .pay-top { gap: 10px; }
+  .pay-top .amt { font-size: 19px; }
+  .kv b { max-width: 58%; }
+}

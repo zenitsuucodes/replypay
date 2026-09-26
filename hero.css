@@ -1,0 +1,43 @@
+/* ReplyPay hero extras (hero.js). Base styles live in styles.css. */
+
+/* Tilt: once a tile has been hovered, drop the reveal delay so tilt follows the pointer */
+.tile.tilt-on { transition: transform 0.35s var(--ease), opacity 0.7s var(--ease); transition-delay: 0s; will-change: transform; }
+
+/* Marquee coin cards */
+.mcard .coin-art { font-size: 42px; }
+.mcard .meta b, .mcard .meta .row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mcard .meta .row { align-items: baseline; }
+.mcard .meta .row b { color: var(--green); }
+.mcard .art .who { max-width: calc(100% - 16px); overflow: hidden; white-space: nowrap; }
+
+/* Leaderboard */
+.brow .likes em { font-style: normal; }
+.board-list { overflow: hidden; }
+
+/* Vote demo */
+.vd-cursor { left: 0; top: 0; }
+.vd-cursor svg { transition: transform 0.18s var(--ease); transform-origin: 20% 15%; }
+.vd-cursor.click svg { transform: scale(0.78); }
+.vd-row .pct { transition: color 0.3s; }
+.vd-row.hit .pct { color: #fff; }
+
+/* Odometer */
+.odometer { font-variant-numeric: tabular-nums; }
+.odo-d > div { will-change: transform; }
+
+/* Search */
+.sr-item { cursor: pointer; min-width: 0; }
+.sr-item > span:not(.av):not(.sr-art) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-item b { font-weight: 600; }
+.sr-art { width: 28px; height: 28px; flex: none; border-radius: 8px; overflow: hidden; font-size: 14px; }
+.sr-item small { flex: none; }
+
+/* Wallet connected state */
+#walletBtn.is-connected { font-family: var(--mono); font-size: 13px; }
+#walletBtn.is-connected::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(52, 211, 153, 0.7); }
+
+@media (max-width: 720px) {
+  .mcard .coin-art { font-size: 30px; }
+  .mcard .meta { padding: 6px 7px 8px; }
+  .mcard .meta .row span:last-child { display: none; }
+}

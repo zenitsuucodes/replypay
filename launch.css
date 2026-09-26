@@ -1,0 +1,24 @@
+/* ReplyPay launch: form feedback + simulated launch result. Injected by launch.js. */
+.launch-form.shake { animation: lfShake 0.42s cubic-bezier(.36,.07,.19,.97); }
+@keyframes lfShake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+.field .msg:empty { display: none; }
+.img-drop.has-img .img-empty { display: none; }
+
+.lp-head { display: flex; flex-direction: column; gap: 8px; padding-right: 36px; }
+.lf-coin { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,.04); border: 1px solid var(--line); min-width: 0; }
+.lf-coin .art { width: 56px; height: 56px; border-radius: 14px; overflow: hidden; flex: none; }
+.lf-coin .art .coin-art { font-size: 18px; }
+.lf-coin .meta { min-width: 0; flex: 1; }
+.lf-coin .meta b { display: block; font-family: var(--display); font-weight: 600; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lf-coin .meta small { color: var(--muted); font-size: 13px; display: block; overflow-wrap: anywhere; }
+.lf-card { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: rgba(29,155,240,.06); border: 1px solid rgba(29,155,240,.25); }
+.lf-card h4 { margin: 0; font-size: 15px; font-weight: 600; }
+.lf-card p { margin: 0; font-size: 12px; color: var(--muted); }
+.lf-card .pv-post { overflow-wrap: anywhere; }
+.lf-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.lf-actions .btn { flex: 1 1 auto; }
