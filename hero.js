@@ -189,7 +189,7 @@
     });
   })();
 
-  // ---------- fake wallet (RP.wallet is read by sections.js for vote eligibility) ----------
+  // ---------- fake wallet (demo only; entering a contest never needs one) ----------
   (function () {
     const btn = $("#walletBtn");
     const DEMO = {
@@ -209,7 +209,7 @@
       document.dispatchEvent(new CustomEvent("rp:wallet", { detail: RP.wallet }));
     };
     RP.wallet = { connected: false, address: null, short: "", holdings: {} };
-    RP.connectWallet = () => { if (!RP.wallet.connected) { set(true); RP.toast("Wallet connected · demo holdings loaded"); } return RP.wallet; };
+    RP.connectWallet = () => { if (!RP.wallet.connected) { set(true); RP.toast("Wallet connected (demo)"); } return RP.wallet; };
     RP.disconnectWallet = () => { if (RP.wallet.connected) { set(false); RP.toast("Wallet disconnected"); } };
     if (btn) btn.addEventListener("click", () => (RP.wallet.connected ? RP.disconnectWallet() : RP.connectWallet()));
   })();
@@ -241,7 +241,7 @@
     const card = (c) => `
       <div class="mcard">
         <div class="art">${RP.coinArt(c)}
-          <span class="age">${c.phase === "voting" ? "Vote · " : ""}${leftLabel(c.endsAt - Date.now())}</span>
+          <span class="age">${leftLabel(c.endsAt - Date.now())}</span>
           <span class="who">${RP.avatar(c.creator)}${esc(RP.personName(c.creator))}</span>
         </div>
         <div class="meta"><b>${esc(c.name)}</b><div class="row"><span>$${esc(c.ticker)}</span><b>${RP.usdCompact(weeklyPool(c))}</b><span>${c.pool}% pool</span></div></div>
@@ -280,21 +280,23 @@
     const all = RP.repliesFor(coin).map((r, i) => Object.assign({ id: i }, r));
     let rows = [], shown = 0;
 
-    const totalLikes = () => all.reduce((s, r) => s + r.likes, 0);
     const fit = () => {
       const h = list.clientHeight;
       if (!h) return 4;
       return Math.max(1, Math.min(5, Math.floor((h + GAP) / STEP)));
     };
     const paint = (animateBump) => {
-      const tot = totalLikes();
+      all.forEach((r) => (r.score = RP.score(r)));
       const prev = rows.map((r) => r.id);
-      rows.sort((a, b) => b.likes - a.likes);
+      rows.sort((a, b) => b.score - a.score);
+      // projected payouts from the full entry list (top N by score, 50% cap)
+      const pay = RP.split(all.map((r) => r.score), pool, coin.winners);
       rows.forEach((r, i) => {
         r.el.style.transform = `translateY(${i * STEP}px)`;
         r.el.querySelector(".rank").textContent = i + 1;
-        r.el.querySelector(".likes em").textContent = fmtInt(r.likes);
-        r.el.querySelector(".earn").textContent = RP.usd((r.likes / tot) * pool, 0);
+        r.el.querySelector(".likes em").textContent = RP.compact(r.likes);
+        r.el.querySelector(".views em").textContent = RP.compact(r.views);
+        r.el.querySelector(".earn").textContent = RP.usd(pay[all.indexOf(r)], 0);
         if (animateBump && prev.indexOf(r.id) > i) {
           r.el.classList.add("bump");
           setTimeout(() => r.el.classList.remove("bump"), 1100);
@@ -306,10 +308,10 @@
       if (n === shown) return;
       shown = n;
       list.innerHTML = "";
-      rows = all.slice(0, n).sort((a, b) => b.likes - a.likes).map((r) => {
+      rows = all.slice(0, n).map((r) => {
         const el = document.createElement("div");
         el.className = "brow";
-        el.innerHTML = `<span class="rank"></span>${RP.avatar(r.handle)}<div class="txt"><b>@${esc(r.handle)}</b><span>${esc(r.text)}</span></div><span class="likes"><svg aria-hidden="true"><use href="#heart"/></svg><em></em></span><span class="earn"></span>`;
+        el.innerHTML = `<span class="rank"></span>${RP.avatar(r.handle)}<div class="txt"><b>@${esc(r.handle)}</b><span>${esc(r.text)}</span></div><span class="likes"><svg aria-hidden="true"><use href="#heart"/></svg><em></em></span><span class="views" title="views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg><em></em></span><span class="earn"></span>`;
         list.appendChild(el);
         r.el = el;
         return r;
@@ -324,10 +326,12 @@
     if (!reduced) every(2200, () => {
       if (!rows.length) return;
       // favour lower rows so overtakes actually happen
-      const sorted = rows.slice().sort((a, b) => b.likes - a.likes);
+      const sorted = rows.slice().sort((a, b) => b.score - a.score);
       const pick = Math.random() < 0.75 && sorted.length > 1 ? sorted[randInt(1, sorted.length - 1)] : sorted[0];
-      pick.likes += randInt(40, 260);
-      rows.filter((r) => r !== pick).forEach((r) => { if (Math.random() < 0.3) r.likes += randInt(1, 12); });
+      const add = randInt(40, 260);
+      pick.likes += add;
+      pick.views += add * randInt(20, 60);
+      rows.filter((r) => r !== pick).forEach((r) => { if (Math.random() < 0.3) { r.likes += randInt(1, 12); r.views += randInt(50, 500); } });
       paint(true);
     }, list);
 
@@ -340,67 +344,53 @@
     }
   })();
 
-  // ---------- holders voting demo ----------
+  // ---------- top entries ($ESSAY): engagement ticks up, rows reorder, projected $ share ----------
   (function () {
-    const box = $("#voteDemo");
+    const list = $("#topList");
     const coin = RP.coinById("chef") || RP.coins[0];
-    if (!box || !coin) return;
-    watch(box);
-    const fins = RP.repliesFor(coin).slice(0, 4);
-    let v = [34, 27, 22, 17];
-
-    const rows = fins.map((f) => {
-      const r = document.createElement("div");
-      r.className = "vd-row";
-      r.title = "@" + f.handle;
-      r.innerHTML = `${RP.avatar(f.handle)}<div class="vd-bar"><i></i></div><span class="pct"></span>`;
-      box.appendChild(r);
-      return r;
+    if (!list || !coin) return;
+    watch(list);
+    const pool = weeklyPool(coin);
+    const rows = RP.repliesFor(coin).slice(0, 4).map((r, i) => {
+      const e = Object.assign({ id: i }, r);
+      const el = document.createElement("div");
+      el.className = "td-row";
+      el.innerHTML = `<span class="rank"></span>${RP.avatar(r.handle)}<div class="td-txt"><b>@${esc(r.handle)}</b><span><svg aria-hidden="true"><use href="#heart"/></svg><em class="l"></em> · <em class="w"></em> views</span></div><span class="td-amt"></span>`;
+      list.appendChild(el);
+      e.el = el;
+      return e;
     });
-    const paint = () => {
-      const max = Math.max.apply(null, v);
+    const step = () => (list.clientHeight ? list.clientHeight / rows.length : 34);
+    const paint = (bump) => {
+      rows.forEach((r) => (r.score = RP.score(r)));
+      const prev = rows.map((r) => r.id);
+      rows.sort((a, b) => b.score - a.score);
+      const pay = RP.split(rows.map((r) => r.score), pool, coin.winners);
+      const h = step();
       rows.forEach((r, i) => {
-        r.querySelector(".vd-bar i").style.setProperty("--v", ((v[i] / max) * 100).toFixed(1) + "%");
-        r.querySelector(".pct").textContent = v[i] + "%";
+        r.el.style.transform = `translateY(${(i * h).toFixed(1)}px)`;
+        r.el.querySelector(".rank").textContent = i + 1;
+        r.el.querySelector(".l").textContent = RP.compact(r.likes);
+        r.el.querySelector(".w").textContent = RP.compact(r.views);
+        r.el.querySelector(".td-amt").textContent = RP.usd(pay[i], 0);
+        if (bump && prev.indexOf(r.id) > i) { r.el.classList.add("bump"); setTimeout(() => r.el.classList.remove("bump"), 1100); }
       });
     };
-    paint();
+    paint(false);
+    requestAnimationFrame(() => paint(false));
+    let rt;
+    window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => paint(false), 150); });
     if (reduced) return;
-
-    const cur = document.createElement("div");
-    cur.className = "vd-cursor";
-    cur.setAttribute("aria-hidden", "true");
-    cur.innerHTML = `<svg viewBox="0 0 24 24"><path d="M5 3.5 19 11l-6.2 1.6L9.6 19z" fill="#fff" stroke="#0a0a0a" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
-    box.appendChild(cur);
-    const moveTo = (x, y) => { cur.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px)`; };
-    moveTo(box.clientWidth - 40, box.clientHeight - 60);
-
-    // add votes to one row, keep total at exactly 100
-    const vote = (i) => {
-      const f = v.map((x, k) => (k === i ? x + rand(4, 9) : x * rand(0.9, 0.98)));
-      const sum = f.reduce((a, b) => a + b, 0);
-      v = f.map((x) => Math.max(5, Math.round((x / sum) * 100)));
-      const diff = 100 - v.reduce((a, b) => a + b, 0);
-      const big = v.indexOf(Math.max.apply(null, v));
-      v[big] += diff;
-    };
-    let last = -1;
-    every(3000, async () => {
-      let i;
-      do { i = randInt(0, rows.length - 1); } while (i === last);
-      last = i;
-      const row = rows[i], bar = row.querySelector(".vd-bar");
-      moveTo(bar.offsetLeft + bar.offsetWidth * rand(0.35, 0.7), row.offsetTop + row.offsetHeight / 2 - 3);
-      await sleep(950);
-      cur.classList.add("click");
-      row.classList.add("hit");
-      vote(i);
-      paint();
-      await sleep(240);
-      cur.classList.remove("click");
-      await sleep(700);
-      row.classList.remove("hit");
-    }, box);
+    every(1800, () => {
+      const sorted = rows.slice().sort((a, b) => b.score - a.score);
+      const pick = Math.random() < 0.7 ? sorted[randInt(1, sorted.length - 1)] : sorted[0];
+      const add = randInt(30, 220);
+      pick.likes += add;
+      pick.views += add * randInt(20, 60);
+      pick.reposts += randInt(2, 20);
+      rows.forEach((r) => { if (r !== pick) { r.likes += randInt(0, 8); r.views += randInt(40, 600); } });
+      paint(true);
+    }, list);
   })();
 
   // ---------- paid-to-repliers odometer ----------
@@ -467,8 +457,8 @@
     const tile = watch(typed.closest(".tile") || typed);
     const MSGS = [
       "$ESSAY reply contest is live. Best replies split 60% of the fees 👇",
-      "Week 2 of $ESSAY. Top 5 replies split the pool, holders vote ✍️",
-      "New week, new post. Reply or quote to enter. Paid in dollars on X Money 🔥",
+      "Week 2 of $ESSAY. Reply or quote, then paste your link on ReplyPay. Code rp-4MXD ✍️",
+      "New week, new post. Most-engaged replies get paid in dollars on X Money 🔥",
     ];
     if (reduced) { typed.textContent = MSGS[0]; return; }
     (async () => {

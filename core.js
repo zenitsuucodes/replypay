@@ -86,14 +86,14 @@
   // Ids are stable (tiles reference "studio" and "chef"); posts describe the contest, not the person's views
   const coins = [
     { id: "studio", name: "Elon Coin", ticker: "ELON", emoji: "🚀", creator: "elonmusk", mc: 412000, vol7d: 1840000, pool: 40, winners: 10, replies: 1284, holders: 3120, phase: "replies", endsAt: NOW + 2 * D + 14 * H, paidTotal: 18420, post: "$ELON reply contest is live. Best replies this week split 40% of the fees 👇" },
-    { id: "ratio", name: "Naval Wisdom", ticker: "NAVAL", emoji: "🧘", creator: "naval", mc: 988000, vol7d: 4200000, pool: 70, winners: 10, replies: 3902, holders: 7810, phase: "voting", endsAt: NOW + 21 * H, paidTotal: 61230, post: "$NAVAL reply contest. Top 10 replies split 70% of the fees this week." },
+    { id: "ratio", name: "Naval Wisdom", ticker: "NAVAL", emoji: "🧘", creator: "naval", mc: 988000, vol7d: 4200000, pool: 70, winners: 10, replies: 3902, holders: 7810, phase: "replies", endsAt: NOW + 21 * H, paidTotal: 61230, post: "$NAVAL reply contest. Top 10 replies split 70% of the fees this week." },
     { id: "gm", name: "Startup School", ticker: "YC", emoji: "🟧", creator: "garrytan", mc: 204000, vol7d: 720000, pool: 50, winners: 5, replies: 842, holders: 1904, phase: "replies", endsAt: NOW + 4 * D + 3 * H, paidTotal: 7310, post: "$YC reply contest. Best replies get paid this Sunday." },
-    { id: "chef", name: "Essays", ticker: "ESSAY", emoji: "📝", creator: "paulg", mc: 156000, vol7d: 510000, pool: 60, winners: 5, replies: 611, holders: 1420, phase: "voting", endsAt: NOW + 1 * D + 6 * H, paidTotal: 4980, post: "$ESSAY reply contest. Holders pick the winners. 60% of fees to the replies." },
+    { id: "chef", name: "Essays", ticker: "ESSAY", emoji: "📝", creator: "paulg", mc: 156000, vol7d: 510000, pool: 60, winners: 5, replies: 611, holders: 1420, phase: "replies", endsAt: NOW + 1 * D + 6 * H, paidTotal: 4980, post: "$ESSAY reply contest. Reply or quote, paste your link on ReplyPay. 60% of fees to the most-engaged posts." },
     { id: "bars", name: "Beast Games", ticker: "BEAST", emoji: "🎮", creator: "MrBeast", mc: 530000, vol7d: 2300000, pool: 50, winners: 10, replies: 2210, holders: 4410, phase: "replies", endsAt: NOW + 3 * D + 9 * H, paidTotal: 29840, post: "$BEAST reply contest. Best replies get paid in dollars. No wallets needed." },
     { id: "hotake", name: "Network State", ticker: "NSTATE", emoji: "🌐", creator: "balajis", mc: 97000, vol7d: 260000, pool: 30, winners: 3, replies: 402, holders: 880, phase: "replies", endsAt: NOW + 5 * D + 1 * H, paidTotal: 2190, post: "$NSTATE reply contest. Top 3 take the pool." },
-    { id: "cat", name: "Ultrasound", ticker: "ULTRA", emoji: "🦇", creator: "VitalikButerin", mc: 342000, vol7d: 1210000, pool: 80, winners: 10, replies: 1730, holders: 3660, phase: "voting", endsAt: NOW + 9 * H, paidTotal: 22760, post: "$ULTRA reply contest. 80% of fees go to the replies." },
+    { id: "cat", name: "Ultrasound", ticker: "ULTRA", emoji: "🦇", creator: "VitalikButerin", mc: 342000, vol7d: 1210000, pool: 80, winners: 10, replies: 1730, holders: 3660, phase: "replies", endsAt: NOW + 9 * H, paidTotal: 22760, post: "$ULTRA reply contest. 80% of fees go to the replies." },
     { id: "ship", name: "Ship It", ticker: "SHIP", emoji: "🚢", creator: "sama", mc: 121000, vol7d: 390000, pool: 40, winners: 5, replies: 318, holders: 990, phase: "replies", endsAt: NOW + 2 * D + 22 * H, paidTotal: 3420, post: "$SHIP reply contest. Best replies split the pool." },
-    { id: "lore", name: "SAFU", ticker: "SAFU", emoji: "🛡️", creator: "cz_binance", mc: 76000, vol7d: 180000, pool: 50, winners: 5, replies: 256, holders: 610, phase: "replies", endsAt: NOW + 6 * D, paidTotal: 980, post: "$SAFU reply contest. Holders vote. Best reply wins." },
+    { id: "lore", name: "SAFU", ticker: "SAFU", emoji: "🛡️", creator: "cz_binance", mc: 76000, vol7d: 180000, pool: 50, winners: 5, replies: 256, holders: 610, phase: "replies", endsAt: NOW + 6 * D, paidTotal: 980, post: "$SAFU reply contest. Most-engaged replies win." },
   ];
 
   // Example replies: neutral banter, not real quotes
@@ -111,16 +111,55 @@
     ["blknoiz06", "this is going to be a busy week"],
     ["nikitabier", "the replies are the product"],
   ];
+  // ---------- engagement scoring ----------
+  // score = likes + 2×reposts + 3×quotes + replies + views/100
+  const score = (m) => (m.likes || 0) + 2 * (m.reposts || 0) + 3 * (m.quotes || 0) + (m.replies || 0) + (m.views || 0) / 100;
+
+  // Split `pool` across the top `n` scores in proportion to score, no winner above `cap` (50%) of the pool.
+  // Capped winners are fixed at the cap and the rest is re-shared among the others (water-filling).
+  // Returns an array of payouts aligned with `scores` (0 for anyone outside the top n).
+  const split = (scores, pool, n, cap = 0.5) => {
+    const idx = scores.map((s, i) => [s, i]).filter(([s]) => s > 0).sort((a, b) => b[0] - a[0]).slice(0, n).map(([, i]) => i);
+    const out = scores.map(() => 0);
+    const max = pool * cap;
+    let open = idx.slice(), left = pool;
+    for (let guard = 0; open.length && guard < 20; guard++) {
+      const sum = open.reduce((s, i) => s + scores[i], 0);
+      const over = open.filter((i) => (scores[i] / sum) * left > max);
+      if (!over.length) { open.forEach((i) => (out[i] = (scores[i] / sum) * left)); break; }
+      over.forEach((i) => { out[i] = max; left -= max; });
+      open = open.filter((i) => over.indexOf(i) < 0);
+    }
+    return out; // anything not paid (fewer than 2 entries) rolls over
+  };
+
+  // Stable fake X post id / contest code per seed
+  const postId = (seed) => { const a = hash(seed), b = hash(seed + "#"); return "18" + String(a).padStart(10, "0").slice(0, 9) + String(b).padStart(10, "0").slice(0, 8); };
+  const CODE_ABC = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const contestCode = (coin) => { let h = hash("code:" + (coin.id || coin)), s = ""; for (let i = 0; i < 4; i++) { s += CODE_ABC[h % 32]; h = Math.floor(h / 32); } return "rp-" + s; };
+
+  // Example entries with deterministic engagement: likes, reposts, quotes, replies, views + score. Sorted by score.
   const repliesFor = (coin) => {
     const seed = hash(coin.id);
     const n = 8;
     const out = [];
     for (let i = 0; i < n; i++) {
       const [handle, text] = REPLY_BANK[(seed + i * 5) % REPLY_BANK.length];
+      const h = hash(coin.id + ":" + i);
       const likes = Math.round(2400 / (i + 1.2) + ((seed >>> i) % 120));
-      out.push({ handle, text, likes, votes: Math.round(likes * (0.6 + ((seed >>> (i + 2)) % 60) / 100)), isQuote: (seed >>> i) % 4 === 0 });
+      const m = {
+        handle, text, likes,
+        reposts: Math.round(likes * (0.05 + (h % 16) / 100)),
+        quotes: Math.round(likes * (0.01 + ((h >>> 4) % 6) / 100)),
+        replies: Math.round(likes * (0.04 + ((h >>> 8) % 12) / 100)),
+        views: Math.round(likes * (24 + ((h >>> 12) % 48))),
+        isQuote: (seed >>> i) % 4 === 0,
+        id: postId(coin.id + ":" + i),
+      };
+      m.score = score(m);
+      out.push(m);
     }
-    return out.sort((a, b) => b.likes - a.likes);
+    return out.sort((a, b) => b.score - a.score);
   };
 
   const repliers = [
@@ -197,7 +236,7 @@
 
   window.RP = {
     BRAND, $, $$, esc, usd, compact, usdCompact, countdown, ago, hash, pal, avatar, coinArt, PEOPLE, personName, photo,
-    coins, coinById, repliesFor, repliers, payments, nextPayment,
+    coins, coinById, repliesFor, score, split, postId, contestCode, repliers, payments, nextPayment,
     toast, modal, openCoin,
     CREATOR_FEE: 0.003, // 0.30% of volume
     XMONEY_DAILY_CAP: 0, // no per-recipient cap

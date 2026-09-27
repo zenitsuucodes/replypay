@@ -43,7 +43,10 @@
   el.nameMsg = addMsg(el.nameWrap);
   el.tickerMsg = addMsg(el.tickerWrap);
 
-  const state = { img: "", pool: 50, winners: 10, elig: "any" };
+  // One-time contest code for this launch; posting it proves the creator owns the X account
+  const CODE_ABC = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const newCode = () => "rp-" + Array.from({ length: 4 }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join("");
+  const state = { img: "", pool: 50, winners: 10, elig: "any", code: newCode() };
 
   // ---------- input cleaning ----------
   const cleanTicker = (s) => s.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
@@ -65,8 +68,9 @@
 
   // ---------- home post ----------
   const postText = (v = vals()) =>
-    `$${v.ticker} is live. Best replies this week split ${state.pool}% of the fees, paid in dollars on X Money. ` +
-    `Top ${state.winners} win.` + (state.elig === "verified" ? " Verified accounts only." : "") + " 👇";
+    `$${v.ticker} reply contest is live. Reply or quote this post, then paste your link on ReplyPay to enter. ` +
+    `Top ${state.winners} by engagement split ${state.pool}% of the fees, paid in dollars on X Money.` +
+    (state.elig === "verified" ? " Verified accounts only." : "") + ` Code: ${state.code} 👇`;
 
   // ---------- preview ----------
   let lastArtKey = "";
@@ -108,12 +112,9 @@
   };
 
   // ---------- simulator ----------
-  // Vote shares decay ~1/(rank+1), normalised over N winners
-  const shares = (n) => {
-    const w = Array.from({ length: n }, (_, i) => 1 / (i + 1));
-    const sum = w.reduce((s, x) => s + x, 0);
-    return w.map((x) => x / sum);
-  };
+  // Payouts are split by engagement score. Assume scores fall off ~1/(rank+1),
+  // then apply the real rule: proportional to score, max 50% per winner (RP.split).
+  const shares = (n) => RP.split(Array.from({ length: n }, (_, i) => 1 / (i + 1)), 1, n);
 
   const renderSim = () => {
     const vol = +el.simVol.value;
@@ -274,14 +275,15 @@
       img: state.img || undefined,
       mc: Math.round(4200 + buy * 150), vol7d: 0, replies: 0, holders: 1, paidTotal: 0,
       pool: cfg.pool, winners: cfg.winners, verifiedOnly: cfg.elig === "verified",
-      phase: "replies", endsAt: nextSunday(), post: text, isNew: true, demo: true,
+      phase: "replies", endsAt: nextSunday(), post: text, code: state.code, isNew: true, demo: true,
     };
     const steps = [
       "Creating token on pump.fun" + (buy ? ` · initial buy ${buy} SOL` : ""),
       "Minting vanity address …rpay",
       "Routing all creator fees to the ReplyPay treasury",
       `Locking split: You ${100 - cfg.pool}% · Replies ${cfg.pool}%`,
-      `Setting up weekly contest (Top ${cfg.winners})`,
+      `Creating contest code ${state.code}`,
+      `Setting up weekly contest (Top ${cfg.winners} by engagement)`,
     ];
     // Demo-only fake mint prefix; real mints are pre-ground to end in "rpay"
     const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -302,7 +304,7 @@
           </div>
           <div class="lf-card">
             <h4>Post your first home post</h4>
-            <p>Replies to this post enter this week's contest. Winners get paid Sunday 20:00.</p>
+            <p>It includes your one-time code <b style="font-family:var(--mono);color:#9fd4ff">${esc(state.code)}</b> for $${esc(v.ticker)}, which proves you own @${esc(v.handle)}. People reply or quote it, paste their link on ReplyPay, and the most-engaged entries get paid Sunday 20:00.</p>
             <div class="pv-post"><svg class="xi"><use href="#x-logo"/></svg>${esc(text)}</div>
             <div class="lf-actions">
               <a class="btn btn-x" href="${esc(intent)}" target="_blank" rel="noopener"><svg class="xi"><use href="#x-logo"/></svg> Post on X</a>
@@ -332,6 +334,8 @@
       document.dispatchEvent(new CustomEvent("rp:coinlaunched", { detail: coin }));
       finish(true);
       RP.toast(`$${v.ticker} launched (demo)`);
+      state.code = newCode();
+      renderPreview();
     }, rows.length * STEP_MS);
 
     $(".lf-actions", body).addEventListener("click", (e) => {

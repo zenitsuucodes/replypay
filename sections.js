@@ -1,5 +1,5 @@
 /* ReplyPay sections: live contests, top repliers, coin page modal, recent payments, biggest pools.
-   Reads everything from window.RP (core.js). Wallet state comes from RP.wallet (hero.js), read defensively. */
+   Reads everything from window.RP (core.js). Entries are ranked by engagement (RP.score) and paid by RP.split. */
 (function () {
   "use strict";
 
@@ -15,8 +15,9 @@
 
   // ---------- shared ----------
   const weeklyPool = (c) => c.vol7d * RP.CREATOR_FEE * c.pool / 100;
-  const phaseLabel = (p) => (p === "voting" ? "Voting" : "Replies open");
-  const wallet = () => RP.wallet || {};
+  const finalDay = (c) => c.endsAt - Date.now() < 864e5;
+  const phaseLabel = (c) => (finalDay(c) ? "Final day" : "Entries open");
+  const phaseCls = (c) => (finalDay(c) ? "final" : "replies");
   // Fake but stable X Money transaction id
   const txnId = (seed) => {
     const h = hash(seed).toString(36).toUpperCase().padStart(7, "0");
@@ -43,8 +44,8 @@
 
   const contestList = () => {
     let list = RP.coins.slice();
-    if (contest.sort === "voting") list = list.filter((c) => c.phase === "voting");
     if (contest.sort === "ending") list.sort((a, b) => a.endsAt - b.endsAt);
+    else if (contest.sort === "entries") list.sort((a, b) => b.replies - a.replies);
     else list.sort((a, b) => weeklyPool(b) - weeklyPool(a));
     return list;
   };
@@ -52,7 +53,7 @@
   const cardHTML = (c, i) => `
     <div class="ccard glass" role="button" tabindex="0" data-id="${esc(c.id)}" style="animation-delay:${i * 0.06}s" aria-label="Open ${esc(c.name)} contest">
       <div class="art">${coinArt(c)}
-        <span class="phase ${c.phase === "voting" ? "voting" : "replies"}">${phaseLabel(c.phase)}</span>
+        <span class="phase ${phaseCls(c)}">${phaseLabel(c)}</span>
         <span class="timer" data-ends="${c.endsAt}">${countdown(c.endsAt - Date.now())}</span>
       </div>
       <div class="body">
@@ -60,7 +61,7 @@
         <div class="by">${avatar(c.creator)}<span>@${esc(c.creator)}</span></div>
         <div class="nums">
           <div><small>Pool</small><b>${usdCompact(weeklyPool(c))}</b></div>
-          <div><small>Replies</small><b>${compact(c.replies)}</b></div>
+          <div><small>Entries</small><b>${compact(c.replies)}</b></div>
           <div><small>Holders</small><b>${compact(c.holders)}</b></div>
         </div>
         <div class="poolbar" title="Creator ${100 - c.pool}% · Reply pool ${c.pool}%"><i class="pc" style="flex:${100 - c.pool}"></i><i class="pp" style="flex:${c.pool}"></i></div>
@@ -124,8 +125,8 @@
     const h = hash(c.id + ":w" + back);
     const paid = weeklyPool(c) * (0.55 + (h % 70) / 100);
     const pool = RP.repliesFor({ id: c.id + back });
-    const shares = [0.3 + (h % 10) / 100, 0.18 + ((h >>> 4) % 8) / 100, 0.1 + ((h >>> 8) % 6) / 100];
-    return { back, label: weekLabel(back), paid, winners: pool.slice(0, 3).map((r, i) => ({ handle: r.handle, amount: paid * shares[i] })) };
+    const pay = RP.split(pool.map((r) => r.score), paid, c.winners);
+    return { back, label: weekLabel(back), paid, winners: pool.slice(0, 3).map((r, i) => ({ handle: r.handle, amount: pay[i] })) };
   });
 
   // Receipts: last week's creator share + reply payouts
@@ -137,43 +138,103 @@
     return out.map((r, i) => ({ ...r, id: txnId(c.id + r.to + i), when: wk.label }));
   };
 
-  const voteWeight = () => {
-    const held = +(wallet().holdings || {})[cp.coin.id] || 0;
-    const cap = cp.totalVotes * 0.05;
-    return Math.round(Math.min(held, cap));
+  // All entries for the open coin page, sorted by score, with projected payouts from RP.split
+  const ranked = () => {
+    const list = cp.entries.slice().sort((a, b) => b.score - a.score);
+    const pay = RP.split(list.map((r) => r.score), weeklyPool(cp.coin), cp.coin.winners);
+    return list.map((r, i) => Object.assign({}, r, { rank: i + 1, payout: pay[i] }));
   };
 
-  const finalistsHTML = () => {
-    const { coin, replies, picks } = cp;
-    const voting = coin.phase === "voting";
-    const w = voting && wallet().connected ? voteWeight() : 0;
-    const add = picks.size && w ? w / picks.size : 0;
-    const total = cp.totalVotes + (picks.size ? w : 0);
-    const note = voting
-      ? `<div class="vote-note"><span>Your vote weight: <b>${w ? compact(w) : "—"}</b> · You can back up to 3 replies</span><span>Capped at 5% of the vote · snapshot Fri 00:00 UTC</span></div>`
-      : `<div class="vote-note"><span>Live ranking by likes from accounts 90d+</span><span><b>Finalists lock Friday 00:00 UTC</b></span></div>`;
-    const rows = replies.map((r, i) => {
-      const picked = picks.has(i);
-      const v = r.votes + (picked ? add : 0);
-      const pct = voting ? (v / total) * 100 : (r.likes / replies[0].likes) * 100;
-      return `
-        <div class="finalist${picked ? " voted" : ""}" data-i="${i}">
-          <span class="rp-rank">${i + 1}</span>
+  const entriesHTML = () => {
+    const { coin } = cp;
+    const list = ranked();
+    const top = list[0] ? list[0].score : 1;
+    const note = `<div class="entry-note"><span>Ranked by engagement · score = likes + 2×reposts + 3×quotes + replies + views/100</span><span><b>Top ${coin.winners} split ${usd(weeklyPool(coin), 0)}</b> · max 50% each</span></div>`;
+    const rows = list.map((r) => `
+        <div class="finalist${r.mine ? " mine" : ""}" data-id="${esc(r.id)}">
+          <span class="rp-rank">${r.rank}</span>
           <div class="txt">
-            <div class="rp-who">${avatar(r.handle)}<b>@${esc(r.handle)}</b>${r.isQuote ? `<span class="tag quote-tag">Quote</span>` : ""}</div>
+            <div class="rp-who">${avatar(r.handle)}<b>@${esc(r.handle)}</b>${r.isQuote ? `<span class="tag quote-tag">Quote</span>` : ""}${r.mine ? `<span class="tag reply">Your entry</span>` : ""}</div>
             <p>${esc(r.text)}</p>
-            <div class="vbar"><i style="width:${pct.toFixed(1)}%"></i></div>
+            <div class="rp-metrics"><span>♥ ${compact(r.likes)}</span><span>⟲ ${compact(r.reposts)}</span><span>◉ ${compact(r.views)} views</span></div>
+            <div class="vbar"><i style="width:${Math.max(2, (r.score / top) * 100).toFixed(1)}%"></i></div>
           </div>
           <div class="side">
-            <span class="v">${voting ? pct.toFixed(1) + "%" : compact(r.likes) + " likes"}</span>
-            <span class="likes">${voting ? compact(r.likes) + " likes" : "#" + (i + 1) + " by likes"}</span>
-            ${voting
-              ? `<button class="vote-btn" data-vote="${i}" aria-pressed="${picked}">${picked ? "Voted" : "Vote"}</button>`
-              : `<button class="vote-btn" disabled aria-disabled="true">Opens Fri</button>`}
+            <span class="v">${compact(Math.round(r.score))}</span>
+            <span class="likes">score</span>
+            <span class="rp-payout${r.payout ? "" : " none"}">${r.payout ? usd(r.payout, 0) : "—"}</span>
           </div>
-        </div>`;
-    }).join("");
+        </div>`).join("");
     return note + rows;
+  };
+
+  // ---------- enter this week's contest (demo) ----------
+  const LINK_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status\/(\d{5,25})(?:[/?#].*)?$/i;
+
+  const enterHTML = (c) => {
+    const homeId = RP.postId("home:" + c.id);
+    const homeUrl = `https://x.com/${c.creator}/status/${homeId}`;
+    const reply = "https://x.com/intent/post?in_reply_to=" + homeId;
+    const quote = "https://x.com/intent/post?url=" + encodeURIComponent(homeUrl);
+    return `
+      <div class="rp-enter">
+        <div class="rp-enter-head"><b>Enter this week's contest</b><span class="demo-flag">Demo — entries are simulated here</span></div>
+        <div class="rp-enter-step">
+          <span class="rp-n">1</span>
+          <div><p>Reply to or quote @${esc(c.creator)}'s home post on X.</p>
+            <div class="rp-enter-btns">
+              <a class="btn btn-white btn-sm" href="${reply}" target="_blank" rel="noopener">${XI} Reply</a>
+              <a class="btn btn-ghost btn-sm" href="${quote}" target="_blank" rel="noopener">${XI} Quote</a>
+            </div>
+          </div>
+        </div>
+        <div class="rp-enter-step">
+          <span class="rp-n">2</span>
+          <div><p>Paste the link to your post. No sign-in needed; the payout goes to whoever wrote it.</p>
+            <form class="rp-enter-form" id="enterForm" novalidate>
+              <input id="enterLink" type="url" inputmode="url" autocomplete="off" placeholder="https://x.com/you/status/…" aria-label="Link to your reply or quote post" />
+              <button type="submit" class="btn btn-white btn-sm">Submit</button>
+            </form>
+            <div class="rp-enter-msg" id="enterMsg" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>`;
+  };
+
+  const submitEntry = (form) => {
+    if (!cp || cp.checking) return;
+    const input = $("#enterLink", form.parentNode), msg = $("#enterMsg", form.parentNode);
+    const url = (input.value || "").trim();
+    const m = url.match(LINK_RE);
+    const say = (cls, html) => { msg.className = "rp-enter-msg " + cls; msg.innerHTML = html; };
+    if (!m) return say("err", "That doesn't look like a post link. Use x.com/&lt;handle&gt;/status/&lt;id&gt;.");
+    const [, handle, id] = m;
+    if (cp.entries.some((r) => r.id === id)) return say("err", "That post is already entered.");
+    if (cp.entries.some((r) => r.handle.toLowerCase() === handle.toLowerCase()))
+      return say("err", `@${esc(handle)} already has an entry this week. One entry counts per account.`);
+    if (handle.toLowerCase() === cp.coin.creator.toLowerCase()) return say("err", "The creator can't enter their own contest.");
+    cp.checking = true;
+    say("run", `<span class="rp-spin"></span> Checking your post…`);
+    const coinId = cp.coin.id;
+    setTimeout(() => {
+      if (!cp || cp.coin.id !== coinId) return;
+      cp.checking = false;
+      cp.added++;
+      const n = cp.coin.replies + cp.added;
+      const h = hash(id);
+      const likes = 3 + (h % 40);
+      const e = { handle, text: "Your reply to this week's home post", likes, reposts: h % 5, quotes: (h >>> 3) % 2, replies: (h >>> 5) % 4, views: likes * (30 + (h % 40)), isQuote: false, id, mine: true };
+      e.score = RP.score(e);
+      cp.entries.push(e);
+      say("ok", `You're in! Entry #${n.toLocaleString("en-US")} · @${esc(handle)}. Metrics refresh through the week.`);
+      input.value = "";
+      // show the entries list with the new row
+      cp.tab = "board";
+      $$(".cp-tabs button", $("#modalBody")).forEach((b) => b.classList.toggle("active", b.dataset.tab === "board"));
+      renderTab();
+      const row = $(`.finalist.mine[data-id="${id}"]`, $("#cpSection"));
+      if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }, 1400);
   };
 
   const pastHTML = () => pastWeeks(cp.coin).map((wk) => `
@@ -198,45 +259,43 @@
     const sec = $("#cpSection");
     if (!sec) return;
     const t = cp.tab;
-    sec.innerHTML = t === "past" ? pastHTML() : t === "receipts" ? receiptsHTML() : finalistsHTML();
+    sec.innerHTML = t === "past" ? pastHTML() : t === "receipts" ? receiptsHTML() : entriesHTML();
   };
 
   const openCoinPage = (id) => {
     const c = RP.coinById(id);
     if (!c) return;
-    const replies = RP.repliesFor(c);
-    cp = { coin: c, replies, picks: new Set(), tab: "board", totalVotes: replies.reduce((s, r) => s + r.votes, 0) };
-    const voting = c.phase === "voting";
-    const intent = "https://x.com/intent/post?text=" + encodeURIComponent("@" + c.creator + " ");
+    cp = { coin: c, entries: RP.repliesFor(c), tab: "board", added: 0, checking: false };
+    const code = c.code || RP.contestCode(c);
     const body = RP.modal.open(`
       <div class="cp-head">
         <div class="art">${coinArt(c)}</div>
         <div class="rp-cp-meta">
           <h3>${esc(c.name)} <span>$${esc(c.ticker)}</span></h3>
           <div class="by">${avatar(c.creator)}<span>by @${esc(c.creator)}</span></div>
-          <div class="rp-cp-chips"><span class="tag reply">${c.pool}% to replies · top ${c.winners}</span><span class="phase ${voting ? "voting" : "replies"}">${phaseLabel(c.phase)}</span><span class="rp-timer" data-ends="${c.endsAt}">${countdown(c.endsAt - Date.now())}</span></div>
+          <div class="rp-cp-chips"><span class="tag reply">${c.pool}% to replies · top ${c.winners}</span><span class="phase ${phaseCls(c)}">${phaseLabel(c)}</span><span class="rp-timer" data-ends="${c.endsAt}">${countdown(c.endsAt - Date.now())}</span></div>
         </div>
       </div>
       <div class="cp-stats">
         <div><small>Market cap</small><b>${usdCompact(c.mc)}</b></div>
         <div><small>This week's pool</small><b>${usdCompact(weeklyPool(c))}</b></div>
-        <div><small>Replies</small><b>${compact(c.replies)}</b></div>
+        <div><small>Entries</small><b>${compact(c.replies)}</b></div>
         <div><small>Paid all time</small><b>${usdCompact(c.paidTotal)}</b></div>
       </div>
       <div class="home-post rp-cp-post">
-        <div class="hp-top">${avatar(c.creator)}<b>${esc(c.creator)}</b><small>@${esc(c.creator)} · home post</small>${XI}</div>
-        <p>${esc(c.post)}</p>
-        <a class="btn btn-white btn-sm rp-reply-btn" href="${intent}" target="_blank" rel="noopener">${XI} Reply on X</a>
+        <div class="hp-top">${avatar(c.creator)}<b>${esc(RP.personName(c.creator))}</b><small>@${esc(c.creator)} · home post</small>${XI}</div>
+        <p>${esc(c.post)}${c.post.indexOf(code) < 0 ? ` <span class="rp-code">${esc(code)}</span>` : ""}</p>
       </div>
+      ${enterHTML(c)}
       <div class="cp-tabs"><div class="seg-tabs" role="tablist">
-        <button class="active" data-tab="board" role="tab">${voting ? "Finalists" : "Leaderboard"}</button>
+        <button class="active" data-tab="board" role="tab">Entries</button>
         <button data-tab="past" role="tab">Past winners</button>
         <button data-tab="receipts" role="tab">Receipts</button>
       </div></div>
       <div class="cp-section" id="cpSection"></div>`);
     renderTab();
 
-    // Delegated handlers live on the body; replaced each open via onclick
+    // Delegated handlers live on the body; replaced each open via onclick/onsubmit
     body.onclick = (e) => {
       if (!cp) return;
       const tab = e.target.closest("[data-tab]");
@@ -244,26 +303,13 @@
         cp.tab = tab.dataset.tab;
         $$(".cp-tabs button", body).forEach((b) => b.classList.toggle("active", b === tab));
         renderTab();
-        return;
       }
-      const vb = e.target.closest("[data-vote]");
-      if (vb) vote(+vb.dataset.vote);
     };
-  };
-
-  const vote = (i) => {
-    const t = "$" + cp.coin.ticker;
-    const w = wallet();
-    if (w.connected !== true) {
-      // Demo: connect in place (the header wallet button is hidden on phones)
-      if (typeof RP.connectWallet === "function") RP.connectWallet();
-      if (wallet().connected !== true) return RP.toast(`Connect a wallet that held ${t} at the Friday snapshot to vote`);
-    }
-    if (!voteWeight()) return RP.toast(`This wallet didn't hold ${t} at the Friday snapshot, so it can't vote`);
-    if (cp.picks.has(i)) cp.picks.delete(i);
-    else if (cp.picks.size >= 3) return RP.toast("You can back up to 3 replies. Remove one first.");
-    else cp.picks.add(i);
-    renderTab();
+    body.onsubmit = (e) => {
+      if (e.target.id !== "enterForm") return;
+      e.preventDefault();
+      submitEntry(e.target);
+    };
   };
 
   document.addEventListener("rp:opencoin", (e) => openCoinPage(e.detail && e.detail.id));
@@ -271,10 +317,8 @@
     if (!cp) return;
     cp = null;
     const b = $("#modalBody");
-    if (b) b.onclick = null;
+    if (b) { b.onclick = null; b.onsubmit = null; }
   });
-  // Wallet connected while a coin page is open: refresh vote weight
-  document.addEventListener("rp:wallet", () => { if (cp && cp.tab === "board") renderTab(); });
 
   // ---------- 4. Recent payments ----------
   const payList = $("#payList");
@@ -301,7 +345,7 @@
           ${isReply && p.reply ? `<div class="quote">${esc(p.reply)}</div>` : ""}
           <div class="kv"><span>Coin</span><b>${esc(c.name)} ($${esc(c.ticker)})</b></div>
           <div class="kv"><span>Week</span><b>${weekLabel(0)}</b></div>
-          <div class="kv"><span>Votes share</span><b>${isReply ? vs + "%" : "Creator share"}</b></div>
+          <div class="kv"><span>Pool share</span><b>${isReply ? vs + "% · by engagement" : "Creator share"}</b></div>
           <div class="kv"><span>Paid via</span><b>X Money</b></div>
           <div class="kv"><span>Receipt id</span><b>${txnId(p.to + p.coin + p.amount)}</b></div>
           <div class="kv"><span>Sent at</span><b>${new Date(born).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</b></div>

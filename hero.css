@@ -14,12 +14,11 @@
 .brow .likes em { font-style: normal; }
 .board-list { overflow: hidden; }
 
-/* Vote demo */
-.vd-cursor { left: 0; top: 0; }
-.vd-cursor svg { transition: transform 0.18s var(--ease); transform-origin: 20% 15%; }
-.vd-cursor.click svg { transform: scale(0.78); }
-.vd-row .pct { transition: color 0.3s; }
-.vd-row.hit .pct { color: #fff; }
+/* Leaderboard views */
+.brow .views { font-size: 12px; color: #a8a8a8; display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.brow .views em { font-style: normal; }
+.brow .views svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+@media (max-width: 420px) { .brow .views { display: none; } }
 
 /* Odometer */
 .odometer { font-variant-numeric: tabular-nums; }
