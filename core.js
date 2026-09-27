@@ -180,6 +180,6 @@
     coins, coinById, repliesFor, repliers, payments, nextPayment,
     toast, modal, openCoin,
     CREATOR_FEE: 0.003, // 0.30% of volume
-    XMONEY_DAILY_CAP: 750,
+    XMONEY_DAILY_CAP: 0, // no per-recipient cap
   };
 })();

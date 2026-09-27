@@ -31,6 +31,7 @@
     return f(d) + " – " + f(end);
   };
   const splitNote = (amt) => {
+    if (!(RP.XMONEY_DAILY_CAP > 0)) return ""; // no cap: paid in one go
     const parts = Math.ceil(amt / RP.XMONEY_DAILY_CAP);
     return parts > 1 ? `Sent in ${parts} parts · ${usd(RP.XMONEY_DAILY_CAP, 0)} cap per 24h` : "";
   };

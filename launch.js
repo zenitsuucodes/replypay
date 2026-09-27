@@ -132,7 +132,7 @@
       row("#1 reply (est.)", usd(top)) +
       row(`Avg. winner (top ${state.winners})`, usd(avg));
     const cap = RP.XMONEY_DAILY_CAP;
-    if (top > cap) html += row(`Sent in ${Math.ceil(top / cap)} parts`, `X Money $${cap}/24h cap`);
+    if (cap > 0 && top > cap) html += row(`Sent in ${Math.ceil(top / cap)} parts`, `X Money $${cap}/24h cap`);
     el.simRows.innerHTML = html;
   };
 
