@@ -458,7 +458,7 @@
     const MSGS = [
       "$ESSAY reply contest is live. Best replies split 60% of the fees 👇",
       "Day 2 of $ESSAY. Reply or quote, then paste your link on ReplyPay. Code rp-4MXD ✍️",
-      "Fresh post for today. Most-engaged replies get paid daily in dollars on X Money 🔥",
+      "Fresh post for today. Most-engaged replies get paid daily in real money on X Money 🔥",
     ];
     if (reduced) { typed.textContent = MSGS[0]; return; }
     (async () => {

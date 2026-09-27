@@ -69,7 +69,7 @@
   // ---------- home post ----------
   const postText = (v = vals()) =>
     `$${v.ticker} reply contest is live. Reply or quote this post, then paste your link on ReplyPay to enter. ` +
-    `Every day, the top ${state.winners} by engagement split ${state.pool}% of that day's fees, paid at 00:00 UTC in dollars on X Money.` +
+    `Every day, the top ${state.winners} by engagement split ${state.pool}% of that day's fees, paid at 00:00 UTC in real money on X Money.` +
     (state.elig === "verified" ? " Verified accounts only." : "") + ` Code: ${state.code} 👇`;
 
   // ---------- preview ----------

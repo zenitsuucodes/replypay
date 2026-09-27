@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ReplyPay - Get paid for replying</title>
-<meta name="description" content="Launch a memecoin on pump.fun. Every day, part of that day's creator fees goes to the most-engaged replies and quotes on your post, ranked automatically and paid in dollars through X Money." />
+<meta name="description" content="Launch a memecoin on pump.fun. Every day, part of that day's creator fees goes to the most-engaged replies and quotes on your post, ranked automatically and paid in real money through X Money." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -71,7 +71,7 @@
       <section class="hero">
         <div class="hero-badge glass-pill reveal"><span class="dot-live"></span> <span id="liveCount">41</span> contests live today</div>
         <h1 class="reveal" style="--d:.05s">Your coin's fees pay<br/><span class="shimmer">the best replies</span> on <span class="x-word"><svg><use href="#x-logo"/></svg></span></h1>
-        <p class="hero-sub reveal" style="--d:.1s">Launch a memecoin, post about it, and every day a slice of that day's creator fees goes to the <b>top replies and quote posts</b>. Paste your post link to enter; the most-engaged posts are paid daily at 00:00 UTC in dollars through <svg class="xi"><use href="#x-logo"/></svg> Money. Launch on <span class="chip-inline"><svg><use href="#pill"/></svg>Pump</span></p>
+        <p class="hero-sub reveal" style="--d:.1s">Launch a memecoin, post about it, and every day a slice of that day's creator fees goes to the <b>top replies and quote posts</b>. Paste your post link to enter; the most-engaged posts are paid daily at 00:00 UTC in real money through <svg class="xi"><use href="#x-logo"/></svg> Money. Launch on <span class="chip-inline"><svg><use href="#pill"/></svg>Pump</span></p>
         <div class="hero-ctas reveal" style="--d:.15s">
           <a href="#launch" class="btn btn-white btn-lg">Launch a coin</a>
           <a href="#explore" class="btn btn-ghost btn-lg">Find a contest to reply to</a>
@@ -134,7 +134,7 @@
         <div class="stats">
           <div class="stat glass reveal"><span class="eyebrow">Coins launched</span><b data-count="1874">0</b><small>+38 today</small></div>
           <div class="stat glass reveal" style="--d:.05s"><span class="eyebrow">Repliers paid</span><b data-count="12406">0</b><small>unique X accounts</small></div>
-          <div class="stat glass reveal" style="--d:.1s"><span class="eyebrow">Paid to repliers</span><b data-count="486215" data-prefix="$">0</b><small>in dollars</small></div>
+          <div class="stat glass reveal" style="--d:.1s"><span class="eyebrow">Paid to repliers</span><b data-count="486215" data-prefix="$">0</b><small>in real money</small></div>
           <div class="stat glass reveal" style="--d:.15s"><span class="eyebrow">Entries scored</span><b data-count="93318">0</b><small>links pasted</small></div>
         </div>
       </section>
@@ -235,7 +235,7 @@
           <div class="cstep glass reveal" style="--d:.05s"><span class="day">ANY TIME TODAY</span><h3>Reply &amp; enter</h3><p>Anyone replies to or quotes the home post, then pastes their post link on ReplyPay to enter. No sign-in needed.</p><div class="art art-replies"><i></i><i></i><i></i></div></div>
           <div class="cstep glass reveal" style="--d:.1s"><span class="day">ALL DAY</span><h3>Engagement tracked</h3><p>Likes, reposts, quotes, replies and views are re-checked all day. The leaderboard updates live.</p><div class="art art-metrics"><i style="--h:40px"></i><i style="--h:28px;animation-delay:.2s"></i><i style="--h:34px;animation-delay:.4s"></i><i style="--h:18px;animation-delay:.6s"></i><i style="--h:24px;animation-delay:.8s"></i></div></div>
           <div class="cstep glass reveal" style="--d:.15s"><span class="day">00:00 UTC</span><h3>Ranked by engagement</h3><p>Entries are scored: likes + 2×reposts + 3×quotes + replies + views/100. The top 3, 5 or 10 win.</p><div class="art art-final"><span>#1</span><span>#2</span><span>#3</span><span>#4</span><span>…</span></div></div>
-          <div class="cstep glass reveal" style="--d:.2s"><span class="day">DAILY</span><h3>Paid daily in dollars</h3><p>That day's pool is swapped to USD and split by score, max 50% each. Winners get dollars through X Money. No entries? It rolls to tomorrow.</p><div class="art art-pay"><span class="coinflow">+$59</span><span class="coinflow">+$37</span><span class="coinflow">+$17</span></div></div>
+          <div class="cstep glass reveal" style="--d:.2s"><span class="day">DAILY</span><h3>Paid daily in real money</h3><p>That day's pool is swapped to USD and split by score, max 50% each. Winners get real money through X Money. No entries? It rolls to tomorrow.</p><div class="art art-pay"><span class="coinflow">+$59</span><span class="coinflow">+$37</span><span class="coinflow">+$17</span></div></div>
         </div>
         <div class="cycle-track"><i id="cycleFill"></i></div>
       </section>
@@ -288,7 +288,7 @@
           <div class="rule glass reveal" style="--d:.1s"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg></span><h3>Deleted posts are dropped</h3><p>If an entry is deleted before 00:00 UTC, it's removed from that day's ranking.</p></div>
           <div class="rule glass reveal"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 18h16M7 18V9M12 18V5M17 18v-6"/></svg></span><h3>50% cap per winner</h3><p>No single winner can take more than half the pool. The rest is re-shared by score.</p></div>
           <div class="rule glass reveal" style="--d:.05s"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 4H7a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z"/><path d="M14 4v4h4M9 13h6M9 16.5h4"/></svg></span><h3>Public record</h3><p>Every contest shows the home post, each entry, its score, the winners, amounts and receipts. Anyone can check.</p></div>
-          <div class="rule glass reveal" style="--d:.1s"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg></span><h3>No wallet to get paid</h3><p>Winners don't need a Solana wallet or a pump.fun account. Dollars land in X Money.</p></div>
+          <div class="rule glass reveal" style="--d:.1s"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg></span><h3>No wallet to get paid</h3><p>Winners don't need a Solana wallet or a pump.fun account. Real money lands in X Money.</p></div>
         </div>
 
         <div class="faq">
@@ -299,7 +299,7 @@
           <details class="glass reveal"><summary>Does the creator need to post every day?</summary><p>No. The home post carries over day to day, and replies or quotes on it count for the day they're entered. The creator can post a fresh one any day for more reach.</p></details>
           <details class="glass reveal"><summary>Can I change the pool split later?</summary><p>No. It's locked at launch so everyone knows what they're playing for.</p></details>
           <details class="glass reveal"><summary>What is ReplyPay not?</summary><p>It's not an exchange or a wallet, and it doesn't hold your coin supply. It launches on pump.fun, runs the daily reply contest and pays out through X Money.</p></details>
-          <details class="glass reveal"><summary>How are winners paid?</summary><p>Daily at 00:00 UTC, in full, in dollars, straight to their X Money. Every payment gets a public receipt.</p></details>
+          <details class="glass reveal"><summary>How are winners paid?</summary><p>Daily at 00:00 UTC, in full, in real money, straight to their X Money. Every payment gets a public receipt.</p></details>
         </div>
       </section>
 
