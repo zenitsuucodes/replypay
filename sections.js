@@ -8,28 +8,26 @@
   const { $, $$, esc, usd, usdCompact, compact, countdown, ago, hash, avatar, coinArt } = RP;
 
   const PER_PAGE = 6;
-  const WEEK = 7 * 864e5;
+  const DAY = 864e5;
   const CHEV = `<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
   const XI = `<svg class="xi" aria-hidden="true"><use href="#x-logo"/></svg>`;
   const VF = `<svg class="vf" aria-label="Verified"><use href="#verified"/></svg>`;
 
   // ---------- shared ----------
-  const weeklyPool = (c) => c.vol7d * RP.CREATOR_FEE * c.pool / 100;
-  const finalDay = (c) => c.endsAt - Date.now() < 864e5;
-  const phaseLabel = (c) => (finalDay(c) ? "Final day" : "Entries open");
-  const phaseCls = (c) => (finalDay(c) ? "final" : "replies");
+  const dailyPool = RP.dailyPool;
+  const finalHours = (c) => c.endsAt - Date.now() < 3 * 36e5;
+  const phaseLabel = (c) => (finalHours(c) ? "Final hours" : "Entries open");
+  const phaseCls = (c) => (finalHours(c) ? "final" : "replies");
   // Fake but stable X Money transaction id
   const txnId = (seed) => {
     const h = hash(seed).toString(36).toUpperCase().padStart(7, "0");
     return "XM-" + h.slice(0, 4) + "…" + h.slice(-3);
   };
-  // Monday-start week label, n weeks back from now
-  const weekLabel = (back) => {
-    const d = new Date(Date.now() - back * WEEK);
-    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
-    const end = new Date(d.getTime() + 6 * 864e5);
-    const f = (x) => x.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-    return f(d) + " – " + f(end);
+  // UTC day label, n days back from today: "Today" / "Yesterday" / "2 days ago", plus the date
+  const dayName = (back) => (back === 0 ? "Today" : back === 1 ? "Yesterday" : back + " days ago");
+  const dayLabel = (back) => {
+    const d = new Date(Date.now() - back * DAY);
+    return dayName(back) + " · " + d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) + " UTC";
   };
   const splitNote = (amt) => {
     if (!(RP.XMONEY_DAILY_CAP > 0)) return ""; // no cap: paid in one go
@@ -46,7 +44,7 @@
     let list = RP.coins.slice();
     if (contest.sort === "ending") list.sort((a, b) => a.endsAt - b.endsAt);
     else if (contest.sort === "entries") list.sort((a, b) => b.replies - a.replies);
-    else list.sort((a, b) => weeklyPool(b) - weeklyPool(a));
+    else list.sort((a, b) => dailyPool(b) - dailyPool(a));
     return list;
   };
 
@@ -60,7 +58,7 @@
         <div class="title"><b>${esc(c.name)}</b><span>$${esc(c.ticker)}</span></div>
         <div class="by">${avatar(c.creator)}<span>@${esc(c.creator)}</span></div>
         <div class="nums">
-          <div><small>Pool</small><b>${usdCompact(weeklyPool(c))}</b></div>
+          <div><small>Pool</small><b>${usdCompact(dailyPool(c))}</b></div>
           <div><small>Entries</small><b>${compact(c.replies)}</b></div>
           <div><small>Holders</small><b>${compact(c.holders)}</b></div>
         </div>
@@ -102,7 +100,10 @@
   setInterval(() => {
     if (document.hidden) return;
     const now = Date.now();
-    $$("[data-ends]").forEach((el) => { el.textContent = countdown(+el.dataset.ends - now); });
+    $$("[data-ends]").forEach((el) => {
+      if (+el.dataset.ends <= now) el.dataset.ends = RP.nextUtcMidnight(now); // a new daily contest starts
+      el.textContent = countdown(+el.dataset.ends - now);
+    });
   }, 1000);
 
   // ---------- 2. Top repliers ----------
@@ -120,28 +121,28 @@
   // ---------- 3. Coin page modal ----------
   let cp = null; // current coin page state
 
-  // Past weeks: pool paid + top 3 winners, deterministic per coin/week
-  const pastWeeks = (c) => [1, 2, 3].map((back) => {
-    const h = hash(c.id + ":w" + back);
-    const paid = weeklyPool(c) * (0.55 + (h % 70) / 100);
+  // Past days: pool paid + top 3 winners, deterministic per coin/day
+  const pastDays = (c) => [1, 2, 3].map((back) => {
+    const h = hash(c.id + ":d" + back);
+    const paid = dailyPool(c) * (0.55 + (h % 70) / 100);
     const pool = RP.repliesFor({ id: c.id + back });
     const pay = RP.split(pool.map((r) => r.score), paid, c.winners);
-    return { back, label: weekLabel(back), paid, winners: pool.slice(0, 3).map((r, i) => ({ handle: r.handle, amount: pay[i] })) };
+    return { back, label: dayLabel(back), paid, winners: pool.slice(0, 3).map((r, i) => ({ handle: r.handle, amount: pay[i] })) };
   });
 
-  // Receipts: last week's creator share + reply payouts
+  // Receipts: yesterday's creator share + reply payouts
   const receipts = (c) => {
-    const wk = pastWeeks(c)[0];
-    const creatorAmt = wk.paid * (100 - c.pool) / c.pool;
+    const day = pastDays(c)[0];
+    const creatorAmt = day.paid * (100 - c.pool) / c.pool;
     const out = [{ to: c.creator, role: "Creator", amount: creatorAmt }];
-    wk.winners.forEach((w, i) => out.push({ to: w.handle, role: "Reply #" + (i + 1), amount: w.amount }));
-    return out.map((r, i) => ({ ...r, id: txnId(c.id + r.to + i), when: wk.label }));
+    day.winners.forEach((w, i) => out.push({ to: w.handle, role: "Reply #" + (i + 1), amount: w.amount }));
+    return out.map((r, i) => ({ ...r, id: txnId(c.id + r.to + i), when: day.label }));
   };
 
   // All entries for the open coin page, sorted by score, with projected payouts from RP.split
   const ranked = () => {
     const list = cp.entries.slice().sort((a, b) => b.score - a.score);
-    const pay = RP.split(list.map((r) => r.score), weeklyPool(cp.coin), cp.coin.winners);
+    const pay = RP.split(list.map((r) => r.score), dailyPool(cp.coin), cp.coin.winners);
     return list.map((r, i) => Object.assign({}, r, { rank: i + 1, payout: pay[i] }));
   };
 
@@ -149,7 +150,7 @@
     const { coin } = cp;
     const list = ranked();
     const top = list[0] ? list[0].score : 1;
-    const note = `<div class="entry-note"><span>Ranked by engagement · score = likes + 2×reposts + 3×quotes + replies + views/100</span><span><b>Top ${coin.winners} split ${usd(weeklyPool(coin), 0)}</b> · max 50% each</span></div>`;
+    const note = `<div class="entry-note"><span>Ranked by engagement · score = likes + 2×reposts + 3×quotes + replies + views/100</span><span><b>Top ${coin.winners} split ${usd(dailyPool(coin), 0)}</b> · max 50% each</span></div>`;
     const rows = list.map((r) => `
         <div class="finalist${r.mine ? " mine" : ""}" data-id="${esc(r.id)}">
           <span class="rp-rank">${r.rank}</span>
@@ -168,7 +169,7 @@
     return note + rows;
   };
 
-  // ---------- enter this week's contest (demo) ----------
+  // ---------- enter today's contest (demo) ----------
   const LINK_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status\/(\d{5,25})(?:[/?#].*)?$/i;
 
   const enterHTML = (c) => {
@@ -178,7 +179,7 @@
     const quote = "https://x.com/intent/post?url=" + encodeURIComponent(homeUrl);
     return `
       <div class="rp-enter">
-        <div class="rp-enter-head"><b>Enter this week's contest</b><span class="demo-flag">Demo — entries are simulated here</span></div>
+        <div class="rp-enter-head"><b>Enter today's contest</b><span class="demo-flag">Demo — entries are simulated here</span></div>
         <div class="rp-enter-step">
           <span class="rp-n">1</span>
           <div><p>Reply to or quote @${esc(c.creator)}'s home post on X.</p>
@@ -211,7 +212,7 @@
     const [, handle, id] = m;
     if (cp.entries.some((r) => r.id === id)) return say("err", "That post is already entered.");
     if (cp.entries.some((r) => r.handle.toLowerCase() === handle.toLowerCase()))
-      return say("err", `@${esc(handle)} already has an entry this week. One entry counts per account.`);
+      return say("err", `@${esc(handle)} already has an entry today. One entry counts per account per day.`);
     if (handle.toLowerCase() === cp.coin.creator.toLowerCase()) return say("err", "The creator can't enter their own contest.");
     cp.checking = true;
     say("run", `<span class="rp-spin"></span> Checking your post…`);
@@ -223,10 +224,10 @@
       const n = cp.coin.replies + cp.added;
       const h = hash(id);
       const likes = 3 + (h % 40);
-      const e = { handle, text: "Your reply to this week's home post", likes, reposts: h % 5, quotes: (h >>> 3) % 2, replies: (h >>> 5) % 4, views: likes * (30 + (h % 40)), isQuote: false, id, mine: true };
+      const e = { handle, text: "Your reply to the home post", likes, reposts: h % 5, quotes: (h >>> 3) % 2, replies: (h >>> 5) % 4, views: likes * (30 + (h % 40)), isQuote: false, id, mine: true };
       e.score = RP.score(e);
       cp.entries.push(e);
-      say("ok", `You're in! Entry #${n.toLocaleString("en-US")} · @${esc(handle)}. Metrics refresh through the week.`);
+      say("ok", `You're in! Entry #${n.toLocaleString("en-US")} · @${esc(handle)}. Metrics refresh all day; ranked at 00:00 UTC.`);
       input.value = "";
       // show the entries list with the new row
       cp.tab = "board";
@@ -237,10 +238,10 @@
     }, 1400);
   };
 
-  const pastHTML = () => pastWeeks(cp.coin).map((wk) => `
-    <div class="rp-week">
-      <div class="rp-week-head"><b>${wk.label}</b><span>${usd(wk.paid)} paid to replies</span></div>
-      ${wk.winners.map((w, i) => `
+  const pastHTML = () => pastDays(cp.coin).map((day) => `
+    <div class="rp-day">
+      <div class="rp-day-head"><b>${day.label}</b><span>${usd(day.paid)} paid to replies</span></div>
+      ${day.winners.map((w, i) => `
         <div class="rp-line">${["🥇", "🥈", "🥉"][i]} ${avatar(w.handle)}<span>@${esc(w.handle)}</span><b>${usd(w.amount)}</b></div>`).join("")}
     </div>`).join("");
 
@@ -250,7 +251,7 @@
       <div class="rp-receipt">
         <div class="rp-line">${avatar(r.to)}<span>to <b>@${esc(r.to)}</b> <span class="tag ${r.role === "Creator" ? "creator" : "reply"}">${r.role}</span></span><b>${usd(r.amount)}</b></div>
         <div class="kv"><span>X Money txn</span><b>${r.id}</b></div>
-        <div class="kv"><span>Week</span><b>${r.when}</b></div>
+        <div class="kv"><span>Day</span><b>${r.when}</b></div>
         ${split ? `<div class="rp-split">${split}</div>` : ""}
       </div>`;
   }).join("");
@@ -278,7 +279,7 @@
       </div>
       <div class="cp-stats">
         <div><small>Market cap</small><b>${usdCompact(c.mc)}</b></div>
-        <div><small>This week's pool</small><b>${usdCompact(weeklyPool(c))}</b></div>
+        <div><small>Today's pool</small><b>${usdCompact(dailyPool(c))}</b></div>
         <div><small>Entries</small><b>${compact(c.replies)}</b></div>
         <div><small>Paid all time</small><b>${usdCompact(c.paidTotal)}</b></div>
       </div>
@@ -344,7 +345,7 @@
         <div class="pay-detail" id="${id}"><div><div class="pay-inner">
           ${isReply && p.reply ? `<div class="quote">${esc(p.reply)}</div>` : ""}
           <div class="kv"><span>Coin</span><b>${esc(c.name)} ($${esc(c.ticker)})</b></div>
-          <div class="kv"><span>Week</span><b>${weekLabel(0)}</b></div>
+          <div class="kv"><span>Day</span><b>${dayLabel(1)} · paid 00:00 UTC</b></div>
           <div class="kv"><span>Pool share</span><b>${isReply ? vs + "% · by engagement" : "Creator share"}</b></div>
           <div class="kv"><span>Paid via</span><b>X Money</b></div>
           <div class="kv"><span>Receipt id</span><b>${txnId(p.to + p.coin + p.amount)}</b></div>

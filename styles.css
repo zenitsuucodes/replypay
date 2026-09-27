@@ -498,7 +498,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 32px 120px; }
 .sim-row.hl { background: rgba(29,155,240,.1); }
 .sim-row.hl span { color: #9fd4ff; }
 
-/* ============ Weekly cycle ============ */
+/* ============ Daily cycle ============ */
 .cycle { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; position: relative; }
 .cstep { padding: 20px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 250px; }
 .cstep .day { font-family: var(--mono); font-size: 11px; color: var(--muted); }

@@ -1,5 +1,5 @@
 /* ReplyPay hero: global chrome (sidebar, nav, reveal, glass, tilt, search, wallet)
-   + animated bento tiles, stats and the weekly cycle. Reads window.RP from core.js. */
+   + animated bento tiles, stats and the daily cycle. Reads window.RP from core.js. */
 (function () {
   "use strict";
 
@@ -226,13 +226,13 @@
   // Bento tiles
   // ======================================================================
 
-  // short "2d 14h" / "9h 12m" label
+  // short "9h 12m" label (contests are under 24h)
   const leftLabel = (ms) => {
     const m = Math.max(0, Math.floor(ms / 60000));
     const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
     return d ? `${d}d ${h}h` : `${h}h ${m % 60}m`;
   };
-  const weeklyPool = (c) => c.vol7d * RP.CREATOR_FEE * (c.pool / 100);
+  const dailyPool = RP.dailyPool;
 
   // ---------- explore marquee ----------
   (function () {
@@ -244,7 +244,7 @@
           <span class="age">${leftLabel(c.endsAt - Date.now())}</span>
           <span class="who">${RP.avatar(c.creator)}${esc(RP.personName(c.creator))}</span>
         </div>
-        <div class="meta"><b>${esc(c.name)}</b><div class="row"><span>$${esc(c.ticker)}</span><b>${RP.usdCompact(weeklyPool(c))}</b><span>${c.pool}% pool</span></div></div>
+        <div class="meta"><b>${esc(c.name)}</b><div class="row"><span>$${esc(c.ticker)}</span><b>${RP.usdCompact(dailyPool(c))}</b><span>${c.pool}% pool</span></div></div>
       </div>`;
     // Real coins trending on pump.fun (snapshot in trending.json; pump.fun blocks browser CORS)
     const pumpCard = (p) => `
@@ -276,7 +276,7 @@
     if (!list || !coin) return;
     watch(list);
     const ROW = 54, GAP = 8, STEP = ROW + GAP;
-    const pool = weeklyPool(coin);
+    const pool = dailyPool(coin);
     const all = RP.repliesFor(coin).map((r, i) => Object.assign({ id: i }, r));
     let rows = [], shown = 0;
 
@@ -338,7 +338,7 @@
     // countdown
     const timer = $("#boardTimer");
     if (timer) {
-      const tick = () => { timer.textContent = RP.countdown(coin.endsAt - Date.now()); };
+      const tick = () => { if (coin.endsAt <= Date.now()) coin.endsAt = RP.nextUtcMidnight(); timer.textContent = RP.countdown(coin.endsAt - Date.now()); };
       tick();
       setInterval(() => { if (!document.hidden) tick(); }, 1000);
     }
@@ -350,7 +350,7 @@
     const coin = RP.coinById("chef") || RP.coins[0];
     if (!list || !coin) return;
     watch(list);
-    const pool = weeklyPool(coin);
+    const pool = dailyPool(coin);
     const rows = RP.repliesFor(coin).slice(0, 4).map((r, i) => {
       const e = Object.assign({ id: i }, r);
       const el = document.createElement("div");
@@ -457,8 +457,8 @@
     const tile = watch(typed.closest(".tile") || typed);
     const MSGS = [
       "$ESSAY reply contest is live. Best replies split 60% of the fees 👇",
-      "Week 2 of $ESSAY. Reply or quote, then paste your link on ReplyPay. Code rp-4MXD ✍️",
-      "New week, new post. Most-engaged replies get paid in dollars on X Money 🔥",
+      "Day 2 of $ESSAY. Reply or quote, then paste your link on ReplyPay. Code rp-4MXD ✍️",
+      "Fresh post for today. Most-engaged replies get paid daily in dollars on X Money 🔥",
     ];
     if (reduced) { typed.textContent = MSGS[0]; return; }
     (async () => {
@@ -505,7 +505,7 @@
   })();
 
   // ======================================================================
-  // Weekly cycle
+  // Daily cycle
   // ======================================================================
   (function () {
     const cycle = $("#cycle"), fill = $("#cycleFill");
