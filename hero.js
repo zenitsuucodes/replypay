@@ -242,18 +242,31 @@
       <div class="mcard">
         <div class="art">${RP.coinArt(c)}
           <span class="age">${c.phase === "voting" ? "Vote · " : ""}${leftLabel(c.endsAt - Date.now())}</span>
-          <span class="who">${RP.avatar(c.creator)}@${esc(c.creator)}</span>
+          <span class="who">${RP.avatar(c.creator)}${esc(RP.personName(c.creator))}</span>
         </div>
         <div class="meta"><b>${esc(c.name)}</b><div class="row"><span>$${esc(c.ticker)}</span><b>${RP.usdCompact(weeklyPool(c))}</b><span>${c.pool}% pool</span></div></div>
       </div>`;
-    const durs = [44, 38, 52, 47];
-    const n = RP.coins.length;
-    wrap.innerHTML = durs.map((dur, col) => {
-      // each column gets 6 coins in a different order; content doubled so -50% loops seamlessly
-      const list = Array.from({ length: 6 }, (_, k) => RP.coins[(col * 2 + k * (col % 2 ? 2 : 1)) % n]);
-      const html = list.map(card).join("");
-      return `<div class="mcol${col % 2 ? " rev" : ""}" style="--dur:${dur}s" aria-hidden="true">${html}${html}</div>`;
-    }).join("");
+    // Real coins trending on pump.fun (snapshot in trending.json; pump.fun blocks browser CORS)
+    const pumpCard = (p) => `
+      <div class="mcard" title="Trending on pump.fun">
+        <div class="art"><img src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'" />
+          <span class="age">pump.fun</span>
+        </div>
+        <div class="meta"><b>${esc(p.name)}</b><div class="row"><span>$${esc(p.symbol)}</span><b>${RP.usdCompact(p.mc)}</b><span>MC</span></div></div>
+      </div>`;
+    const render = (pump) => {
+      const durs = [44, 38, 52, 47];
+      const n = RP.coins.length;
+      wrap.innerHTML = durs.map((dur, col) => {
+        // 6 cards per column, example contests mixed with pump.fun coins; doubled so -50% loops seamlessly
+        const list = Array.from({ length: 6 }, (_, k) =>
+          pump.length && (k + col) % 2 === 1 ? pumpCard(pump[(col * 3 + k) % pump.length]) : card(RP.coins[(col * 2 + k * (col % 2 ? 2 : 1)) % n]));
+        const html = list.join("");
+        return `<div class="mcol${col % 2 ? " rev" : ""}" style="--dur:${dur}s" aria-hidden="true">${html}${html}</div>`;
+      }).join("");
+    };
+    render([]);
+    fetch("trending.json").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d && d.coins && d.coins.length) render(d.coins); }).catch(() => {});
   })();
 
   // ---------- reply leaderboard ($STUDIO) ----------
@@ -453,9 +466,9 @@
     if (!typed) return;
     const tile = watch(typed.closest(".tile") || typed);
     const MSGS = [
-      "$CHEF is live. Worst cooking fail wins. 50% of fees to the replies 👇",
-      "Week 2 of $CHEF. Show me your saddest sandwich. Top 5 replies split the pool 🥪",
-      "New week, new post. Quote this with your kitchen disaster. Holders pick the winners 🔥",
+      "$ESSAY reply contest is live. Best replies split 60% of the fees 👇",
+      "Week 2 of $ESSAY. Top 5 replies split the pool, holders vote ✍️",
+      "New week, new post. Reply or quote to enter. Paid in dollars on X Money 🔥",
     ];
     if (reduced) { typed.textContent = MSGS[0]; return; }
     (async () => {

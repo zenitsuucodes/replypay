@@ -41,16 +41,36 @@
   ];
   const pal = (s) => PALETTES[hash(s) % PALETTES.length];
 
-  // Avatar bubble for an X handle. size: "" | "lg" | "xl"
+  // Example people (public X accounts). Photos load live from their public profile.
+  const PEOPLE = {
+    elonmusk: { name: "Elon Musk", verified: true },
+    naval: { name: "Naval", verified: true },
+    paulg: { name: "Paul Graham", verified: true },
+    sama: { name: "Sam Altman", verified: true },
+    VitalikButerin: { name: "vitalik.eth", verified: true },
+    pmarca: { name: "Marc Andreessen", verified: true },
+    garrytan: { name: "Garry Tan", verified: true },
+    balajis: { name: "Balaji", verified: true },
+    MrBeast: { name: "MrBeast", verified: true },
+    cz_binance: { name: "CZ", verified: true },
+    blknoiz06: { name: "Ansem", verified: true },
+    nikitabier: { name: "Nikita Bier", verified: true },
+  };
+  const personName = (h) => (PEOPLE[h] ? PEOPLE[h].name : h);
+  const photo = (h) => "https://unavatar.io/x/" + encodeURIComponent(h);
+
+  // Avatar bubble for an X handle: real photo when we know the person, letter fallback otherwise.
   const avatar = (handle, size = "") => {
-    const [a, b] = pal(handle);
-    const letter = esc(handle.replace(/^@/, "").charAt(0).toUpperCase() || "?");
-    return `<span class="av ${size}" style="--a:${a};--b:${b}">${letter}</span>`;
+    const h = handle.replace(/^@/, "");
+    const [a, b] = pal(h);
+    const letter = esc(h.charAt(0).toUpperCase() || "?");
+    const img = PEOPLE[h] ? `<img src="${photo(h)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" />` : "";
+    return `<span class="av ${size}" style="--a:${a};--b:${b}">${letter}${img}</span>`;
   };
 
   // Generated coin art (no external images). Returns a .coin-art div; parent sets size.
   const coinArt = (coin) => {
-    if (coin.img) return `<img src="${esc(coin.img)}" alt="" style="width:100%;height:100%;object-fit:cover" />`;
+    if (coin.img) return `<img src="${esc(coin.img)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" />`;
     const h = hash(coin.ticker || coin.name || "x");
     const c1 = PALETTES[h % PALETTES.length][0];
     const c2 = PALETTES[(h >>> 3) % PALETTES.length][0];
@@ -59,37 +79,37 @@
     return `<div class="coin-art" style="--c1:${c1};--c2:${c2};--c3:${c3}"><em>${label}</em></div>`;
   };
 
-  // ---------- mock data ----------
+  // ---------- example data (illustration of how the site looks) ----------
   const NOW = Date.now();
   const H = 3600e3, D = 24 * H;
 
-  // Next "Sunday 20:00" style deadline, spread per coin so timers differ
+  // Ids are stable (tiles reference "studio" and "chef"); posts describe the contest, not the person's views
   const coins = [
-    { id: "studio", name: "Studio Session", ticker: "STUDIO", emoji: "🎙️", creator: "lilvapor", mc: 412000, vol7d: 1840000, pool: 40, winners: 10, replies: 1284, holders: 3120, phase: "replies", endsAt: NOW + 2 * D + 14 * H, paidTotal: 18420, post: "$STUDIO is live. Best replies this week split 40% of the fees. Tell me what the album should be called 👇" },
-    { id: "ratio", name: "Ratio Club", ticker: "RATIO", emoji: "📉", creator: "ratioking", mc: 988000, vol7d: 4200000, pool: 70, winners: 10, replies: 3902, holders: 7810, phase: "voting", endsAt: NOW + 21 * H, paidTotal: 61230, post: "Ratio me. Seriously. Top 10 replies split 70% of this week's fees." },
-    { id: "gm", name: "gm coin", ticker: "GM", emoji: "☀️", creator: "sunriseszn", mc: 204000, vol7d: 720000, pool: 50, winners: 5, replies: 842, holders: 1904, phase: "replies", endsAt: NOW + 4 * D + 3 * H, paidTotal: 7310, post: "say gm to the funniest person you know. best gm replies get paid this sunday" },
-    { id: "chef", name: "Chef's Kiss", ticker: "CHEF", emoji: "👨‍🍳", creator: "nova", mc: 156000, vol7d: 510000, pool: 60, winners: 5, replies: 611, holders: 1420, phase: "voting", endsAt: NOW + 1 * D + 6 * H, paidTotal: 4980, post: "Post your worst cooking fail. Holders pick the winners. 60% of fees to the replies." },
-    { id: "bars", name: "Bars Only", ticker: "BARS", emoji: "🎤", creator: "kaydenraps", mc: 530000, vol7d: 2300000, pool: 50, winners: 10, replies: 2210, holders: 4410, phase: "replies", endsAt: NOW + 3 * D + 9 * H, paidTotal: 29840, post: "Drop your best 4 bars under this post. Best bars get paid in dollars. No wallets needed." },
-    { id: "hotake", name: "Hot Take", ticker: "TAKE", emoji: "🌶️", creator: "jules", mc: 97000, vol7d: 260000, pool: 30, winners: 3, replies: 402, holders: 880, phase: "replies", endsAt: NOW + 5 * D + 1 * H, paidTotal: 2190, post: "Give me your worst hot take. Top 3 take the pool." },
-    { id: "cat", name: "Office Cat", ticker: "OCAT", emoji: "🐈", creator: "whiskerswork", mc: 342000, vol7d: 1210000, pool: 80, winners: 10, replies: 1730, holders: 3660, phase: "voting", endsAt: NOW + 9 * H, paidTotal: 22760, post: "Post your cat at work. 80% of fees go to the replies. The cat approves." },
-    { id: "ship", name: "Ship It", ticker: "SHIP", emoji: "🚢", creator: "buildlog", mc: 121000, vol7d: 390000, pool: 40, winners: 5, replies: 318, holders: 990, phase: "replies", endsAt: NOW + 2 * D + 22 * H, paidTotal: 3420, post: "What did you ship this week? Best replies split the pool. Screenshots welcome." },
-    { id: "lore", name: "Lore Drop", ticker: "LORE", emoji: "📜", creator: "mythmaker", mc: 76000, vol7d: 180000, pool: 50, winners: 5, replies: 256, holders: 610, phase: "replies", endsAt: NOW + 6 * D, paidTotal: 980, post: "Write the lore for $LORE in one reply. Holders vote. Best story wins." },
+    { id: "studio", name: "Elon Coin", ticker: "ELON", emoji: "🚀", creator: "elonmusk", mc: 412000, vol7d: 1840000, pool: 40, winners: 10, replies: 1284, holders: 3120, phase: "replies", endsAt: NOW + 2 * D + 14 * H, paidTotal: 18420, post: "$ELON reply contest is live. Best replies this week split 40% of the fees 👇" },
+    { id: "ratio", name: "Naval Wisdom", ticker: "NAVAL", emoji: "🧘", creator: "naval", mc: 988000, vol7d: 4200000, pool: 70, winners: 10, replies: 3902, holders: 7810, phase: "voting", endsAt: NOW + 21 * H, paidTotal: 61230, post: "$NAVAL reply contest. Top 10 replies split 70% of the fees this week." },
+    { id: "gm", name: "Startup School", ticker: "YC", emoji: "🟧", creator: "garrytan", mc: 204000, vol7d: 720000, pool: 50, winners: 5, replies: 842, holders: 1904, phase: "replies", endsAt: NOW + 4 * D + 3 * H, paidTotal: 7310, post: "$YC reply contest. Best replies get paid this Sunday." },
+    { id: "chef", name: "Essays", ticker: "ESSAY", emoji: "📝", creator: "paulg", mc: 156000, vol7d: 510000, pool: 60, winners: 5, replies: 611, holders: 1420, phase: "voting", endsAt: NOW + 1 * D + 6 * H, paidTotal: 4980, post: "$ESSAY reply contest. Holders pick the winners. 60% of fees to the replies." },
+    { id: "bars", name: "Beast Games", ticker: "BEAST", emoji: "🎮", creator: "MrBeast", mc: 530000, vol7d: 2300000, pool: 50, winners: 10, replies: 2210, holders: 4410, phase: "replies", endsAt: NOW + 3 * D + 9 * H, paidTotal: 29840, post: "$BEAST reply contest. Best replies get paid in dollars. No wallets needed." },
+    { id: "hotake", name: "Network State", ticker: "NSTATE", emoji: "🌐", creator: "balajis", mc: 97000, vol7d: 260000, pool: 30, winners: 3, replies: 402, holders: 880, phase: "replies", endsAt: NOW + 5 * D + 1 * H, paidTotal: 2190, post: "$NSTATE reply contest. Top 3 take the pool." },
+    { id: "cat", name: "Ultrasound", ticker: "ULTRA", emoji: "🦇", creator: "VitalikButerin", mc: 342000, vol7d: 1210000, pool: 80, winners: 10, replies: 1730, holders: 3660, phase: "voting", endsAt: NOW + 9 * H, paidTotal: 22760, post: "$ULTRA reply contest. 80% of fees go to the replies." },
+    { id: "ship", name: "Ship It", ticker: "SHIP", emoji: "🚢", creator: "sama", mc: 121000, vol7d: 390000, pool: 40, winners: 5, replies: 318, holders: 990, phase: "replies", endsAt: NOW + 2 * D + 22 * H, paidTotal: 3420, post: "$SHIP reply contest. Best replies split the pool." },
+    { id: "lore", name: "SAFU", ticker: "SAFU", emoji: "🛡️", creator: "cz_binance", mc: 76000, vol7d: 180000, pool: 50, winners: 5, replies: 256, holders: 610, phase: "replies", endsAt: NOW + 6 * D, paidTotal: 980, post: "$SAFU reply contest. Holders vote. Best reply wins." },
   ];
 
-  // Replies per coin (finalists). Generated deterministically for any coin id.
+  // Example replies: neutral banter, not real quotes
   const REPLY_BANK = [
-    ["memequeen", "call it 'Fees Don't Lie' and I'll buy 3 copies"],
-    ["kaydenraps", "bro really made a coin so we'd write his album title"],
-    ["justjon", "Album title: 'Paid In Replies'. You're welcome."],
-    ["tinyanalyst", "Checked the receipts page. This actually pays. Wild."],
-    ["deltadev", "the leaderboard updating live is dangerously addictive"],
-    ["rinamoon", "Name it after the first person to get paid lol"],
-    ["okayfine", "'Reply Guy Anthem'. that's it. that's the reply."],
-    ["plaidcap", "if this doesn't win I'm quote posting it every day"],
-    ["beatsbynova", "Title: 'Studio Hours'. Tracklist in the quotes."],
-    ["verymid", "my mom liked this reply so it's basically verified"],
-    ["cryptocarl", "LFG. 'Fee Fi Fo Fum'."],
-    ["sanaa", "'Split Screen'. Because we split the fees. Get it."],
+    ["sama", "this is how creator economies should work"],
+    ["naval", "gm, where do I sign up"],
+    ["pmarca", "the leaderboard updating live is dangerously addictive"],
+    ["garrytan", "checked the receipts page. this actually pays"],
+    ["VitalikButerin", "love a public record"],
+    ["balajis", "replying for science"],
+    ["MrBeast", "best replies get paid? say less"],
+    ["paulg", "the best reply wins. simple."],
+    ["elonmusk", "interesting"],
+    ["cz_binance", "gm"],
+    ["blknoiz06", "this is going to be a busy week"],
+    ["nikitabier", "the replies are the product"],
   ];
   const repliesFor = (coin) => {
     const seed = hash(coin.id);
@@ -104,24 +124,24 @@
   };
 
   const repliers = [
-    { handle: "memequeen", name: "meme queen", wins: 14, earned: 9420.5, verified: true },
-    { handle: "kaydenraps", name: "Kayden", wins: 11, earned: 7815.2, verified: true },
-    { handle: "justjon", name: "Jon", wins: 9, earned: 6120.0, verified: false },
-    { handle: "tinyanalyst", name: "tiny analyst", wins: 8, earned: 5390.75, verified: true },
-    { handle: "rinamoon", name: "Rina", wins: 7, earned: 4210.4, verified: false },
-    { handle: "okayfine", name: "okay fine", wins: 6, earned: 3882.1, verified: false },
+    { handle: "MrBeast", name: "MrBeast", wins: 14, earned: 9420.5, verified: true },
+    { handle: "sama", name: "Sam Altman", wins: 11, earned: 7815.2, verified: true },
+    { handle: "blknoiz06", name: "Ansem", wins: 9, earned: 6120.0, verified: true },
+    { handle: "pmarca", name: "Marc Andreessen", wins: 8, earned: 5390.75, verified: true },
+    { handle: "nikitabier", name: "Nikita Bier", wins: 7, earned: 4210.4, verified: true },
+    { handle: "balajis", name: "Balaji", wins: 6, earned: 3882.1, verified: true },
   ];
 
   // kind: "reply" (winner of a reply pool) | "creator" (creator share)
   const payments = [
-    { amount: 412.5, to: "memequeen", coin: "ratio", kind: "reply", rank: 1, mins: 3, reply: "the only thing getting ratioed here is my sleep schedule" },
-    { amount: 1240.0, to: "ratioking", coin: "ratio", kind: "creator", mins: 3 },
-    { amount: 260.1, to: "justjon", coin: "ratio", kind: "reply", rank: 2, mins: 4, reply: "Ratio. Also this coin pays better than my job." },
-    { amount: 118.4, to: "rinamoon", coin: "cat", kind: "reply", rank: 3, mins: 22, reply: "my cat attends every standup and has never said a word" },
-    { amount: 750.0, to: "whiskerswork", coin: "cat", kind: "creator", mins: 22 },
-    { amount: 88.9, to: "okayfine", coin: "chef", kind: "reply", rank: 1, mins: 71, reply: "I set water on fire. Not boiling water. Water." },
-    { amount: 64.2, to: "tinyanalyst", coin: "bars", kind: "reply", rank: 4, mins: 140, reply: "four bars: fees in, replies out, dollars on X, no wallet, no doubt" },
-    { amount: 530.0, to: "kaydenraps", coin: "bars", kind: "creator", mins: 140 },
+    { amount: 412.5, to: "pmarca", coin: "ratio", kind: "reply", rank: 1, mins: 3, reply: "the leaderboard updating live is dangerously addictive" },
+    { amount: 1240.0, to: "naval", coin: "ratio", kind: "creator", mins: 3 },
+    { amount: 260.1, to: "sama", coin: "ratio", kind: "reply", rank: 2, mins: 4, reply: "this is how creator economies should work" },
+    { amount: 118.4, to: "balajis", coin: "cat", kind: "reply", rank: 3, mins: 22, reply: "replying for science" },
+    { amount: 750.0, to: "VitalikButerin", coin: "cat", kind: "creator", mins: 22 },
+    { amount: 88.9, to: "MrBeast", coin: "chef", kind: "reply", rank: 1, mins: 71, reply: "best replies get paid? say less" },
+    { amount: 64.2, to: "nikitabier", coin: "bars", kind: "reply", rank: 4, mins: 140, reply: "the replies are the product" },
+    { amount: 530.0, to: "MrBeast", coin: "bars", kind: "creator", mins: 140 },
   ];
 
   const nextPayment = (() => {
@@ -176,7 +196,7 @@
   $$("[data-brand]").forEach((el) => (el.textContent = BRAND));
 
   window.RP = {
-    BRAND, $, $$, esc, usd, compact, usdCompact, countdown, ago, hash, pal, avatar, coinArt,
+    BRAND, $, $$, esc, usd, compact, usdCompact, countdown, ago, hash, pal, avatar, coinArt, PEOPLE, personName, photo,
     coins, coinById, repliesFor, repliers, payments, nextPayment,
     toast, modal, openCoin,
     CREATOR_FEE: 0.003, // 0.30% of volume
